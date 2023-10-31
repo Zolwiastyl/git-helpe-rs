@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::PathBuf};
 
 use crate::file_utils::config_file::get_path_to_config;
 use anyhow::{Error, Result};
@@ -14,6 +14,7 @@ pub fn open(custom_path_to_config_file: Option<PathBuf>) -> GitConfig {
 pub struct GitConfig {
     commit_format: String,
     branch_format: String,
+    branch_prefix_variants: HashMap<String, String>,
 }
 
 impl GitConfig {
@@ -21,6 +22,7 @@ impl GitConfig {
         return GitConfig {
             commit_format: "".to_string(),
             branch_format: "".to_string(),
+            branch_prefix_variants: HashMap::new(),
         };
     }
     pub fn from_file(path_to_file: PathBuf) -> Self {
