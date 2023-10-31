@@ -45,7 +45,8 @@ pub fn checkout_to_branch_with_prefix(
             .arg("checkout")
             .arg("-b")
             .arg(new_val)
-            .spawn()
+            .output()
+            // .spawn()
             .unwrap();
         return Ok(());
     }
