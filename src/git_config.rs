@@ -12,9 +12,9 @@ pub fn open(custom_path_to_config_file: Option<PathBuf>) -> GitConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GitConfig {
-    commit_format: String,
-    branch_format: String,
-    branch_prefix_variants: HashMap<String, String>,
+    pub commit_format: String,
+    pub branch_format: String,
+    pub branch_prefix_variants: HashMap<String, String>,
 }
 
 impl GitConfig {

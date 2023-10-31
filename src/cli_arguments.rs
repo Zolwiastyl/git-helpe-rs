@@ -22,7 +22,7 @@ pub enum Operation {
 
 #[derive(Debug, Clone)]
 pub struct BranchOperationArguments {
-    branch_prefix_key: String,
+    pub branch_prefix_key: String,
 }
 
 #[derive(Debug, Clone)]
@@ -38,9 +38,9 @@ pub enum ParsedCLIOperationWithArgs {
 
 #[derive(Debug)]
 pub struct ParsedCLIArguments {
-    operation_with_arguments: ParsedCLIOperationWithArgs,
-    config_path: PathBuf,
-    use_template: bool,
+    pub operation_with_arguments: ParsedCLIOperationWithArgs,
+    pub config_path: PathBuf,
+    pub use_template: bool,
 }
 
 impl TryFrom<CLIArguments> for ParsedCLIArguments {
@@ -80,7 +80,7 @@ impl TryFrom<Vec<String>> for ParsedCLIOperationWithArgs {
         };
         match operation {
             Operation::Branch => {
-                let prefix_key = value.get(2).expect("Too few arguments");
+                let prefix_key = value.get(1).expect("Too few arguments");
                 Ok(ParsedCLIOperationWithArgs::Branch(
                     BranchOperationArguments {
                         branch_prefix_key: prefix_key.to_string(),

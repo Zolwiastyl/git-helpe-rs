@@ -5,6 +5,7 @@
     "./Cargo.toml",
     "./Cargo.toml",
     "./Cargo.toml",
+    "./Cargo.toml",
     "./Cargo.toml"
   ],
   "rust-analyzer.diagnostics.disabled": ["unresolved-proc-macro"]
