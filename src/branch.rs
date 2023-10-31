@@ -35,7 +35,7 @@ pub fn checkout_to_branch_with_prefix(
     {
         let new_val = format!("{}{}", prefix_found, &output_as_string);
         println!("running command: {:?}", new_val);
-        Command::new("sh").arg(new_val);
+        Command::new(new_val).output().unwrap();
         return Ok(());
     }
     return Err(anyhow!(
