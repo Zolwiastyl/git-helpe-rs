@@ -33,9 +33,20 @@ pub fn checkout_to_branch_with_prefix(
         .branch_prefix_variants
         .get(&options.branch_prefix_key)
     {
-        let new_val = format!("{}{}", prefix_found, &output_as_string);
+        let split_on_space: Vec<String> =
+            output_as_string.split(" ").map(|s| s.to_string()).collect();
+
+        let after_prefix = &split_on_space[3..].join("");
+
+        let new_val = prefix_found.to_owned() + after_prefix;
+
         println!("running command: {:?}", new_val);
-        Command::new(new_val).output().unwrap();
+        Command::new("git")
+            .arg("checkout")
+            .arg("-b")
+            .arg(new_val)
+            .spawn()
+            .unwrap();
         return Ok(());
     }
     return Err(anyhow!(
