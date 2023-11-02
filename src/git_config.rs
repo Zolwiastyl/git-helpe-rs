@@ -88,15 +88,10 @@ impl GitConfig {
     pub fn from_file(path_to_file: PathBuf) -> Self {
         if fs::metadata(&path_to_file).is_ok() {
             let contents = fs::read_to_string(&path_to_file);
-            println!("contents: {:?}", contents);
             let contents = contents
                 .unwrap_or("{\"commit_format\": \"\", \"branch_format\": \"\"}".to_string());
-            println!("contents 2: {:?}", contents);
 
             let data = serde_json::from_str(&contents);
-
-            println!("data: {:?}", data);
-
             let data: Data = data.unwrap_or(Data::default());
 
             GitConfig {
@@ -162,7 +157,11 @@ impl GitConfig {
 
     pub fn delete_branch_prefix_variants(&mut self, key: String) -> Result<()> {
         let old_val = self.data.branch_prefix_variants.remove(&key);
-        println!("Removed {} : {:?} from config ", key, old_val);
+        println!(
+            "Removed {} : {} from config ",
+            key,
+            old_val.unwrap_or(String::from("None"))
+        );
         self.save_to_file()?;
         Ok(())
     }

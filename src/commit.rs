@@ -17,7 +17,6 @@ pub fn commit_with_formatted_message(
         let err: Error = is_valid.err().unwrap();
         return Err(err);
     }
-    // res
 
     let interpolated_commit =
         interpolate(&config.data.commit_format, options.interpolation_values)?;

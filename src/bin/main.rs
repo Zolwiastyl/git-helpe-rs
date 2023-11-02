@@ -10,7 +10,6 @@ use git_helpe_rs::{
 
 fn main() -> Result<()> {
     let args: ParsedCLIArguments = CLIArguments::parse().try_into()?;
-    println!("args \n {:?}", args);
 
     let mut config = GitConfig::from_file(args.config_path);
 
@@ -25,7 +24,7 @@ fn main() -> Result<()> {
             println!("{}", config_to_display);
             Ok(())
         }
-        ParsedCLIOperationWithArgs::Delete(_) => todo!("implement me"),
+        ParsedCLIOperationWithArgs::Delete(val) => config.delete_branch_prefix_variants(val.key),
         ParsedCLIOperationWithArgs::SetBranchFormat(args) => {
             config.set_format(BranchOrCommitAction::Branch(args))
         }
@@ -35,10 +34,9 @@ fn main() -> Result<()> {
     };
 
     match resp {
-        Ok(()) => println!("Everything was fine"),
+        Ok(()) => {}
         Err(er) => println!("{:?}", er),
     }
 
-    println!("Hello, world!");
     Ok(())
 }
