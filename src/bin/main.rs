@@ -5,7 +5,7 @@ use git_helpe_rs::{
     branch::checkout_to_branch_with_prefix,
     cli_arguments::{CLIArguments, ParsedCLIArguments, ParsedCLIOperationWithArgs},
     commit::commit_with_formatted_message,
-    git_config::GitConfig,
+    git_config::{BranchOrCommitAction, GitConfig},
 };
 
 fn main() -> Result<()> {
@@ -26,8 +26,12 @@ fn main() -> Result<()> {
             Ok(())
         }
         ParsedCLIOperationWithArgs::Delete(_) => todo!("implement me"),
-        ParsedCLIOperationWithArgs::SetBranchFormat(_) => todo!("implement me"),
-        ParsedCLIOperationWithArgs::SetCommitFormat(_) => todo!("implement me"),
+        ParsedCLIOperationWithArgs::SetBranchFormat(args) => {
+            config.set_format(BranchOrCommitAction::Branch(args))
+        }
+        ParsedCLIOperationWithArgs::SetCommitFormat(args) => {
+            config.set_format(BranchOrCommitAction::Commit(args))
+        }
     };
 
     match resp {

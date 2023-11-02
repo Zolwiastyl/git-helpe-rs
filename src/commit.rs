@@ -25,7 +25,9 @@ pub fn commit_with_formatted_message(
     Command::new("git")
         .arg("commit")
         .arg("-m")
-        .arg(interpolated_commit);
+        .arg(interpolated_commit)
+        .output()
+        .unwrap();
     Ok(())
 }
 
