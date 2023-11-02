@@ -36,7 +36,6 @@ pub fn checkout_to_branch_with_prefix(
 
         let new_val = prefix_found.to_owned() + after_prefix;
 
-        println!("running command: {:?}", new_val);
         Command::new("git")
             .arg("checkout")
             .arg("-b")
