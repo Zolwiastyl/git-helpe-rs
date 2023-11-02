@@ -144,13 +144,13 @@ impl TryFrom<Vec<String>> for ParsedCLIOperationWithArgs {
             // ==============
             // CRUD for config
             Operation::SetBranchFormat => Ok(ParsedCLIOperationWithArgs::SetBranchFormat(
-                validate_set_action(&mut value),
+                validate_set_format_action(&mut value, String::from("branch_format")),
             )),
             Operation::SetBranchPrefix => Ok(ParsedCLIOperationWithArgs::SetBranchPrefix(
                 validate_set_action(&mut value),
             )),
             Operation::SetCommitFormat => Ok(ParsedCLIOperationWithArgs::SetCommitFormat(
-                validate_set_action(&mut value),
+                validate_set_format_action(&mut value, String::from("commit_format")),
             )),
             Operation::Delete => {
                 let mut args = value.drain(1..2);
@@ -166,14 +166,25 @@ impl TryFrom<Vec<String>> for ParsedCLIOperationWithArgs {
     }
 }
 
-fn validate_set_action(value: &mut Vec<String>) -> SetOperationArguments {
-    let mut args = value.drain(1..3);
-    let key = args
-        .next()
-        .expect("At leas two arguments are expected for this operation - provided 0");
+fn validate_set_format_action(value: &mut Vec<String>, key: String) -> SetOperationArguments {
+    let mut args = value.drain(1..);
     let value = args
         .next()
-        .expect("At leas two arguments are expected for this operation - provided 1");
+        .expect("One argument is expected for this operation");
+    SetOperationArguments {
+        key: key,
+        value: value,
+    }
+}
+
+fn validate_set_action(value: &mut Vec<String>) -> SetOperationArguments {
+    let mut args = value.drain(1..);
+    let key = args
+        .next()
+        .expect("At least two arguments are expected for this operation - provided 0");
+    let value = args
+        .next()
+        .expect("At least two arguments are expected for this operation - provided 1");
     SetOperationArguments {
         key: key,
         value: value,
