@@ -32,7 +32,7 @@ pub struct BranchOperationArguments {
 
 #[derive(Debug, Clone)]
 pub struct CommitOperationArguments {
-    interpolation_values: Vec<String>,
+    pub interpolation_values: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
