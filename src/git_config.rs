@@ -98,7 +98,7 @@ impl GitConfig {
         self.data.branch_format = new_formats.branch_format;
         self.data.commit_format = new_formats.commit_format;
 
-        self.save_to_file();
+        self.save_to_file()?;
         Ok(())
     }
 
@@ -106,7 +106,14 @@ impl GitConfig {
         self.data
             .branch_prefix_variants
             .insert(String::from(key), value);
-        self.save_to_file();
+        self.save_to_file()?;
+        Ok(())
+    }
+
+    fn delete_branch_prefix_variants(&mut self, key: &str) -> Result<()> {
+        let old_val = self.data.branch_prefix_variants.remove(&String::from(key));
+        println!("Removed {} : {:?} from config ", key, old_val);
+        self.save_to_file()?;
         Ok(())
     }
 
