@@ -43,7 +43,7 @@ pub struct SetOperationArguments {
 
 #[derive(Debug, Clone)]
 pub struct DeleteOperationArguments {
-    key: String,
+    pub key: String,
 }
 
 #[derive(Debug, Clone)]

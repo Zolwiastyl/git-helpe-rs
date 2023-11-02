@@ -145,11 +145,6 @@ impl GitConfig {
                     },
                 }
             }
-            _ => {
-                return Err(Error::msg(format!(
-                    "Invalid key  was passed, allowed keys are 'branch_format' and 'branch_commit'"
-                )))
-            }
         };
 
         self.data.branch_format = new_formats.branch_format;
