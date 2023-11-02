@@ -30,6 +30,7 @@ pub fn checkout_to_branch_with_prefix(
     }
 
     if let Some(prefix_found) = config
+        .data
         .branch_prefix_variants
         .get(&options.branch_prefix_key)
     {

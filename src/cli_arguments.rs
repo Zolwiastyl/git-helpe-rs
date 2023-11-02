@@ -18,6 +18,11 @@ pub struct CLIArguments {
 pub enum Operation {
     Commit,
     Branch,
+    SetCommitFormat,
+    SetBranchFormat,
+    SetBranchPrefix,
+    Delete,
+    Show,
 }
 
 #[derive(Debug, Clone)]
@@ -31,9 +36,28 @@ pub struct CommitOperationArguments {
 }
 
 #[derive(Debug, Clone)]
+pub struct SetOperationArguments {
+    pub key: String,
+    pub value: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct DeleteOperationArguments {
+    key: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ShowOperationArguments {}
+
+#[derive(Debug, Clone)]
 pub enum ParsedCLIOperationWithArgs {
     Branch(BranchOperationArguments),
     Commit(CommitOperationArguments),
+    SetBranchFormat(SetOperationArguments),
+    SetCommitFormat(SetOperationArguments),
+    SetBranchPrefix(SetOperationArguments),
+    Delete(DeleteOperationArguments),
+    Show(ShowOperationArguments),
 }
 
 #[derive(Debug)]
@@ -70,14 +94,36 @@ impl TryFrom<Vec<String>> for ParsedCLIOperationWithArgs {
             Operation::Branch
         } else if first_arg == "c" {
             Operation::Commit
+        } else if first_arg == "set-commit" {
+            Operation::SetCommitFormat
+        } else if first_arg == "set-branch" {
+            Operation::SetBranchFormat
+        } else if first_arg == "set-prefix" {
+            Operation::SetBranchPrefix
+        } else if first_arg == "delete" {
+            Operation::Delete
+        } else if first_arg == "show" {
+            Operation::Show
         } else {
             return Err(anyhow!(
                 "
-            Only valid first arguments are - c (commit) or b (branch) - got {}
+            Only valid first arguments for performing git commands are: \n
+            - c (for commit)
+            - b (for branch)\n
+            Only valid first arguments for other actions are:
+            - set-commit
+            - set-branch
+            - set-prefix
+            - delete
+            - show
+            \n
+            Argument provided: {}
             ",
                 first_arg
             ));
         };
+
+        let mut value = value;
         match operation {
             Operation::Branch => {
                 let prefix_key = value.get(1).expect("Too few arguments");
@@ -95,30 +141,41 @@ impl TryFrom<Vec<String>> for ParsedCLIOperationWithArgs {
                     },
                 ))
             }
+            // ==============
+            // CRUD for config
+            Operation::SetBranchFormat => Ok(ParsedCLIOperationWithArgs::SetBranchFormat(
+                validate_set_action(&mut value),
+            )),
+            Operation::SetBranchPrefix => Ok(ParsedCLIOperationWithArgs::SetBranchPrefix(
+                validate_set_action(&mut value),
+            )),
+            Operation::SetCommitFormat => Ok(ParsedCLIOperationWithArgs::SetCommitFormat(
+                validate_set_action(&mut value),
+            )),
+            Operation::Delete => {
+                let mut args = value.drain(1..2);
+                let key = args
+                    .next()
+                    .expect("1 argument expected for this operation - provided 0");
+                Ok(ParsedCLIOperationWithArgs::Delete(
+                    DeleteOperationArguments { key: key },
+                ))
+            }
+            Operation::Show => Ok(ParsedCLIOperationWithArgs::Show(ShowOperationArguments {})),
         }
     }
 }
 
-// impl TryFrom<Vec<String>
-
-// Interface that I want
-// githelpers b f <- making branches happens from clipboard
-// githelpers c 2137 "the message that I want to add to commit"
-
-// ==================
-// ====  BRANCH  ====
-// ==================
-
-// copy it from clipboard -> branch
-// apply given prefix from hashmap to branch -> command
-// run command -> end
-
-// ==================
-// ==== TEMPLATE ====
-// ==================
-
-// take interpolation values from CLI
-// count interpolation spots number against values provided
-//          return error if don't match
-// use pattern from config file and interpolate it
-// run command
+fn validate_set_action(value: &mut Vec<String>) -> SetOperationArguments {
+    let mut args = value.drain(1..3);
+    let key = args
+        .next()
+        .expect("At leas two arguments are expected for this operation - provided 0");
+    let value = args
+        .next()
+        .expect("At leas two arguments are expected for this operation - provided 1");
+    SetOperationArguments {
+        key: key,
+        value: value,
+    }
+}

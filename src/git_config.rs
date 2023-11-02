@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
-use crate::file_utils::config_file::get_path_to_config;
+use crate::{cli_arguments::SetOperationArguments, file_utils::config_file::get_path_to_config};
 use anyhow::{Error, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -12,12 +12,12 @@ pub fn open(custom_path_to_config_file: Option<PathBuf>) -> GitConfig {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GitConfig {
-    data: Data,
+    pub data: Data,
     config_path: PathBuf,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Data {
+pub struct Data {
     pub commit_format: String,
     pub branch_format: String,
     pub branch_prefix_variants: HashMap<String, String>,
@@ -28,25 +28,81 @@ pub struct Formats {
     pub branch_format: String,
 }
 
+pub enum BranchOrCommitAction {
+    Branch(SetOperationArguments),
+    Commit(SetOperationArguments),
+}
+
+impl TryInto<SetOperationArguments> for BranchOrCommitAction {
+    type Error = Error;
+    fn try_into(self) -> std::result::Result<SetOperationArguments, Self::Error> {
+        match self {
+            BranchOrCommitAction::Branch(args) => Ok(SetOperationArguments {
+                key: args.key,
+                value: args.value,
+            }),
+            BranchOrCommitAction::Commit(args) => Ok(SetOperationArguments {
+                key: args.key,
+                value: args.value,
+            }),
+        }
+    }
+}
+impl Data {
+    fn default() -> Self {
+        Data {
+            commit_format: "".to_string(),
+            branch_format: "".to_string(),
+            branch_prefix_variants: HashMap::new(),
+        }
+    }
+}
 impl GitConfig {
     fn default_config() -> Self {
         return GitConfig {
-            data: Data {
-                commit_format: "".to_string(),
-                branch_format: "".to_string(),
-                branch_prefix_variants: HashMap::new(),
-            },
+            data: Data::default(),
             config_path: get_path_to_config(None),
+        };
+    }
+
+    pub fn new_config(
+        hash_map: HashMap<String, String>,
+        branch_format: String,
+        commit_format: String,
+        config_path: Option<PathBuf>,
+    ) -> Self {
+        return GitConfig {
+            data: Data {
+                branch_format,
+                commit_format,
+                branch_prefix_variants: hash_map,
+            },
+            config_path: if let Some(config_path) = config_path {
+                config_path
+            } else {
+                get_path_to_config(None)
+            },
         };
     }
 
     pub fn from_file(path_to_file: PathBuf) -> Self {
         if fs::metadata(&path_to_file).is_ok() {
             let contents = fs::read_to_string(&path_to_file);
+            println!("contents: {:?}", contents);
             let contents = contents
                 .unwrap_or("{\"commit_format\": \"\", \"branch_format\": \"\"}".to_string());
+            println!("contents 2: {:?}", contents);
+
             let data = serde_json::from_str(&contents);
-            data.unwrap_or(Self::default_config())
+
+            println!("data: {:?}", data);
+
+            let data: Data = data.unwrap_or(Data::default());
+
+            GitConfig {
+                data: data,
+                config_path: path_to_file,
+            }
         } else {
             Self::default_config()
         }
@@ -65,10 +121,11 @@ impl GitConfig {
         )));
     }
 
-    pub fn set_format(&mut self, key: &str, value: String) -> Result<()> {
-        let new_formats: Formats = match key {
-            "branch_format" => {
-                let result = Self::validate_against_interpolation_regex(&value, "branch_format");
+    pub fn set_format(&mut self, args: BranchOrCommitAction) -> Result<()> {
+        let new_formats: Formats = match args {
+            BranchOrCommitAction::Branch(action_args) => {
+                let result =
+                    Self::validate_against_interpolation_regex(&action_args.value, "branch_format");
                 match result {
                     Err(err) => panic!("{}", err),
                     Ok(new_val) => Formats {
@@ -77,8 +134,9 @@ impl GitConfig {
                     },
                 }
             }
-            "commit_format" => {
-                let result = Self::validate_against_interpolation_regex(&value, "branch_format");
+            BranchOrCommitAction::Commit(action_args) => {
+                let result =
+                    Self::validate_against_interpolation_regex(&action_args.value, "branch_format");
                 match result {
                     Err(err) => panic!("{}", err),
                     Ok(new_val) => Formats {
@@ -89,9 +147,8 @@ impl GitConfig {
             }
             _ => {
                 return Err(Error::msg(format!(
-                "Invalid key {} was passed, allowed keys are 'branch_format' and 'branch_commit'",
-                key
-            )))
+                    "Invalid key  was passed, allowed keys are 'branch_format' and 'branch_commit'"
+                )))
             }
         };
 
@@ -102,16 +159,14 @@ impl GitConfig {
         Ok(())
     }
 
-    fn set_branch_prefix_variants(&mut self, key: &str, value: String) -> Result<()> {
-        self.data
-            .branch_prefix_variants
-            .insert(String::from(key), value);
+    pub fn set_branch_prefix_variants(&mut self, key: String, value: String) -> Result<()> {
+        self.data.branch_prefix_variants.insert(key, value);
         self.save_to_file()?;
         Ok(())
     }
 
-    fn delete_branch_prefix_variants(&mut self, key: &str) -> Result<()> {
-        let old_val = self.data.branch_prefix_variants.remove(&String::from(key));
+    pub fn delete_branch_prefix_variants(&mut self, key: String) -> Result<()> {
+        let old_val = self.data.branch_prefix_variants.remove(&key);
         println!("Removed {} : {:?} from config ", key, old_val);
         self.save_to_file()?;
         Ok(())
@@ -123,8 +178,24 @@ impl GitConfig {
                 std::fs::create_dir_all(dir)?;
             }
         };
+
         let contents = serde_json::to_string(&self.data)?;
         std::fs::write(&self.config_path, contents)?;
         return Ok(());
+    }
+
+    pub fn display_config(&self) -> Result<String> {
+        let branch = self.data.branch_format.to_string();
+        let commit = self.data.commit_format.to_string();
+        let prefixes = self.data.branch_prefix_variants.to_owned();
+
+        Ok(format!(
+            "
+        branch format: {} 
+        commit format: {} 
+        branch prefixes: {:?} 
+        ",
+            branch, commit, prefixes
+        ))
     }
 }
