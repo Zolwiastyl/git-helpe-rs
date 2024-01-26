@@ -17,14 +17,14 @@ fn main() -> Result<()> {
         ParsedCLIOperationWithArgs::Branch(val) => checkout_to_branch_with_prefix(val, config),
         ParsedCLIOperationWithArgs::Commit(val) => commit_with_formatted_message(val, config),
         ParsedCLIOperationWithArgs::SetBranchPrefix(args) => {
-            config.set_branch_prefix_variants(args.key, args.value)
+            config.set_branch_prefix_variant(args.key, args.value)
         }
         ParsedCLIOperationWithArgs::Show(_) => {
             let config_to_display = config.display_config()?;
             println!("{}", config_to_display);
             Ok(())
         }
-        ParsedCLIOperationWithArgs::Delete(val) => config.delete_branch_prefix_variants(val.key),
+        ParsedCLIOperationWithArgs::Delete(val) => config.delete_branch_prefix_variant(val.key),
         ParsedCLIOperationWithArgs::SetBranchFormat(args) => {
             config.set_format(BranchOrCommitAction::Branch(args))
         }

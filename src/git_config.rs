@@ -5,11 +5,6 @@ use anyhow::{Error, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-pub fn open(custom_path_to_config_file: Option<PathBuf>) -> GitConfig {
-    let path_to_config = get_path_to_config(custom_path_to_config_file);
-    GitConfig::from_file(path_to_config)
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GitConfig {
     pub data: Data,
@@ -116,6 +111,8 @@ impl GitConfig {
         )));
     }
 
+    // TODO
+    // This should get a key as well
     pub fn set_format(&mut self, args: BranchOrCommitAction) -> Result<()> {
         let new_formats: Formats = match args {
             BranchOrCommitAction::Branch(action_args) => {
@@ -142,6 +139,8 @@ impl GitConfig {
             }
         };
 
+        // FIXME
+        // This looks like an obvious overwrite
         self.data.branch_format = new_formats.branch_format;
         self.data.commit_format = new_formats.commit_format;
 
@@ -149,13 +148,13 @@ impl GitConfig {
         Ok(())
     }
 
-    pub fn set_branch_prefix_variants(&mut self, key: String, value: String) -> Result<()> {
+    pub fn set_branch_prefix_variant(&mut self, key: String, value: String) -> Result<()> {
         self.data.branch_prefix_variants.insert(key, value);
         self.save_to_file()?;
         Ok(())
     }
 
-    pub fn delete_branch_prefix_variants(&mut self, key: String) -> Result<()> {
+    pub fn delete_branch_prefix_variant(&mut self, key: String) -> Result<()> {
         let old_val = self.data.branch_prefix_variants.remove(&key);
         println!(
             "Removed {} : {} from config ",
