@@ -17,7 +17,8 @@ pub struct CLIArguments {
 
 pub enum Operation {
     Commit,
-    Branch,
+    BranchFromClipboard,
+    BranchFromTemplate,
     SetCommitFormat,
     SetBranchFormat,
     SetBranchPrefix,
@@ -25,31 +26,33 @@ pub enum Operation {
     Show,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct BranchOperationArguments {
     pub branch_prefix_key: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct CommitOperationArguments {
     pub interpolation_values: Vec<String>,
+    pub autocomplete_values: bool,
+    pub autocomplete_from_branch: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct SetOperationArguments {
     pub key: String,
     pub value: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct DeleteOperationArguments {
     pub key: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct ShowOperationArguments {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum ParsedCLIOperationWithArgs {
     Branch(BranchOperationArguments),
     Commit(CommitOperationArguments),
@@ -91,7 +94,7 @@ impl TryFrom<Vec<String>> for ParsedCLIOperationWithArgs {
         }
         let first_arg = value.get(0).expect("We should never be here");
         let operation = if first_arg == "b" {
-            Operation::Branch
+            Operation::BranchFromClipboard
         } else if first_arg == "c" {
             Operation::Commit
         } else if first_arg == "set-commit" {
@@ -125,7 +128,7 @@ impl TryFrom<Vec<String>> for ParsedCLIOperationWithArgs {
 
         let mut value = value;
         match operation {
-            Operation::Branch => {
+            Operation::BranchFromClipboard => {
                 let prefix_key = value.get(1).expect("Too few arguments");
                 Ok(ParsedCLIOperationWithArgs::Branch(
                     BranchOperationArguments {
@@ -138,6 +141,8 @@ impl TryFrom<Vec<String>> for ParsedCLIOperationWithArgs {
                 Ok(ParsedCLIOperationWithArgs::Commit(
                     CommitOperationArguments {
                         interpolation_values: rest_of_args,
+                        autocomplete_from_branch: false,
+                        autocomplete_values: false,
                     },
                 ))
             }

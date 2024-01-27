@@ -54,3 +54,23 @@ chmod +x git-helpe-rs
 [] add piping output from git
 [] add dry run
 [] add copy flag
+
+  set-branch-format  Set template that can be used when switching branches
+  set-commit         Set template for commit formatting
+
+  set-branch-prefix  Set prefix for checkout using clipboard contents
+        key value
+
+  bp                 Check you out to a branch using your clipboard contents
+        prefixKey
+
+  bf                 Check out to a branch based on template
+  -k use exact template
+  c                  Commit using one of templates
+    -a use autocomplete values
+    -k use exact template
+    -b use number from branch
+        template-key ..interpolate-values
+
+  show               Show current config in plain JSON
+  help               Print this message or the help of the given subcommand(s)

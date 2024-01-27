@@ -3,12 +3,14 @@ use clap::Parser;
 
 use git_helpe_rs::{
     branch::checkout_to_branch_with_prefix,
+    cli,
     cli_arguments::{CLIArguments, ParsedCLIArguments, ParsedCLIOperationWithArgs},
     commit::commit_with_formatted_message,
     git_config::{BranchOrCommitAction, GitConfig},
 };
 
 fn main() -> Result<()> {
+    let dupa = cli::define();
     let args: ParsedCLIArguments = CLIArguments::parse().try_into()?;
 
     let mut config = GitConfig::from_file(args.config_path);
