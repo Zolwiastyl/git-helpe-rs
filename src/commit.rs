@@ -2,7 +2,7 @@ use std::process::Command;
 
 use anyhow::{Error, Result};
 
-use crate::{cli_arguments::CommitOperationArguments, git_config::GitConfig};
+use crate::{cli::CommitOperationArguments, git_config::GitConfig};
 
 pub fn commit_with_formatted_message(
     options: CommitOperationArguments,
@@ -10,7 +10,7 @@ pub fn commit_with_formatted_message(
 ) -> Result<(), Error> {
     let is_valid = validate_interpolation_places_count(
         &config.data.commit_format,
-        options.interpolation_values.len(),
+        options.use_template.interpolate_values.len(),
     );
 
     if is_valid.is_err() {
@@ -18,8 +18,10 @@ pub fn commit_with_formatted_message(
         return Err(err);
     }
 
-    let interpolated_commit =
-        interpolate(&config.data.commit_format, options.interpolation_values)?;
+    let interpolated_commit = interpolate(
+        &config.data.commit_format,
+        options.use_template.interpolate_values,
+    )?;
 
     Command::new("git")
         .arg("commit")

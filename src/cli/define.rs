@@ -1,7 +1,8 @@
-use clap::{command, Arg, ArgAction, Command};
+use clap::{Arg, ArgAction, Command};
 
 pub fn build_cli_commands() -> Command {
-    command!()
+    Command::new("")
+        .arg(Arg::new("config").required(false).short('c'))
         .subcommand(
             Command::new("set-branch-prefix")
                 .arg(Arg::new("key").required(false))
@@ -63,7 +64,7 @@ pub fn build_cli_commands() -> Command {
         // ========== COMMIT-RELATED COMMANDS ========== //
         .subcommand(
             Command::new("set-commit")
-                .arg(Arg::new("interpolate_values").required(true).help(
+                .arg(Arg::new("template").required(true).help(
                     "Template has places to interpolate marked with {}, [], {b} \n\n\
                     When you provide: \n\
                     '[{}] - {}' \n\
@@ -90,10 +91,6 @@ pub fn build_cli_commands() -> Command {
                 Otherwise it will be saved as your default \n\
                 ",
                 ))
-                .subcommand(
-                    Command::new("set-auto-complete")
-                        .arg(Arg::new("auto_complete_value").required(true).num_args(0..)),
-                )
                 .about("Set template for commit formatting")
                 .after_help(
                     "Sets commit format. \n\
@@ -102,6 +99,11 @@ pub fn build_cli_commands() -> Command {
                     and {b} as places to autocomplete from number in branch. \n\
                     ",
                 ),
+        )
+        .subcommand(
+            Command::new("set-auto-complete")
+                .about("set value that will be used to autocomplete commit template")
+                .arg(Arg::new("auto_complete_value").required(true).num_args(0..)),
         )
         .subcommand(
             Command::new("c")
@@ -133,4 +135,15 @@ pub fn build_cli_commands() -> Command {
         )
         // ============== OTHERS ============== //
         .subcommand(Command::new("show").about("Show current config in plain JSON"))
+        .subcommand(
+            Command::new("set-clipboard-command")
+                .about("[WIP] Set command which will be run when doing taking value from clipboard")
+                .arg(Arg::new("program_name").help(
+                    "On default it's written to use pbpaste as \
+                command for taking branch from clipboard, but if you want \
+                you can use command of your own choice
+               please don't use it for now 
+                ",
+                )),
+        )
 }

@@ -3,12 +3,9 @@ use std::process::Command;
 use anyhow::{anyhow, Result};
 use regex::Regex;
 
-use crate::{cli_arguments::BranchOperationArguments, git_config::GitConfig};
+use crate::{cli::CheckoutToPrefix, git_config::GitConfig};
 
-pub fn checkout_to_branch_with_prefix(
-    options: BranchOperationArguments,
-    config: GitConfig,
-) -> Result<()> {
+pub fn checkout_to_branch_with_prefix(options: CheckoutToPrefix, config: GitConfig) -> Result<()> {
     let checkout_regex = Regex::new(r"^git checkout -b [a-zA-Z0-9_.-]+$").unwrap();
     let clipboard_value = Command::new("pbpaste")
         .output()
@@ -24,11 +21,7 @@ pub fn checkout_to_branch_with_prefix(
         ));
     }
 
-    if let Some(prefix_found) = config
-        .data
-        .branch_prefix_variants
-        .get(&options.branch_prefix_key)
-    {
+    if let Some(prefix_found) = config.data.branch_prefix_variants.get(&options.prefix_key) {
         let split_on_space: Vec<String> =
             output_as_string.split(" ").map(|s| s.to_string()).collect();
 
@@ -48,6 +41,6 @@ pub fn checkout_to_branch_with_prefix(
     }
     return Err(anyhow!(
         "There was no prefix for key {} \n You should add it prior to trying to use",
-        options.branch_prefix_key
+        options.prefix_key
     ));
 }

@@ -1,37 +1,43 @@
 use anyhow::Result;
-use clap::Parser;
 
 use git_helpe_rs::{
     branch::checkout_to_branch_with_prefix,
     cli,
-    cli_arguments::{CLIArguments, ParsedCLIArguments, ParsedCLIOperationWithArgs},
     commit::commit_with_formatted_message,
     git_config::{BranchOrCommitAction, GitConfig},
 };
 
 fn main() -> Result<()> {
-    let dupa = cli::define();
-    let args: ParsedCLIArguments = CLIArguments::parse().try_into()?;
+    let args: cli::ParsedArguments = cli::define::build_cli_commands().get_matches().try_into()?;
 
-    let mut config = GitConfig::from_file(args.config_path);
+    let mut config = GitConfig::from_file(args.path_to_config);
 
     let resp = match args.operation_with_arguments {
-        ParsedCLIOperationWithArgs::Branch(val) => checkout_to_branch_with_prefix(val, config),
-        ParsedCLIOperationWithArgs::Commit(val) => commit_with_formatted_message(val, config),
-        ParsedCLIOperationWithArgs::SetBranchPrefix(args) => {
+        cli::OperationWithArguments::BranchFromClipboard(val) => {
+            checkout_to_branch_with_prefix(val, config)
+        }
+        cli::OperationWithArguments::Commit(val) => commit_with_formatted_message(val, config),
+        cli::OperationWithArguments::SetBranchPrefix(args) => {
             config.set_branch_prefix_variant(args.key, args.value)
         }
-        ParsedCLIOperationWithArgs::Show(_) => {
+        cli::OperationWithArguments::Show => {
             let config_to_display = config.display_config()?;
             println!("{}", config_to_display);
             Ok(())
         }
-        ParsedCLIOperationWithArgs::Delete(val) => config.delete_branch_prefix_variant(val.key),
-        ParsedCLIOperationWithArgs::SetBranchFormat(args) => {
+        // TODO implement delete
+        // cli::OperationWithArguments::Delete(val) => config.delete_branch_prefix_variant(val.key),
+        cli::OperationWithArguments::SetBranchFormat(args) => {
             config.set_format(BranchOrCommitAction::Branch(args))
         }
-        ParsedCLIOperationWithArgs::SetCommitFormat(args) => {
+        cli::OperationWithArguments::SetCommitFormat(args) => {
             config.set_format(BranchOrCommitAction::Commit(args))
+        }
+        cli::OperationWithArguments::BranchFromTemplate(_args) => {
+            todo!("Implement")
+        }
+        cli::OperationWithArguments::SetClipboardCommand(_) => {
+            todo!("Implement")
         }
     };
 

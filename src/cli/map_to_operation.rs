@@ -1,49 +1,19 @@
+use std::path::PathBuf;
+
 use anyhow::Ok;
 use clap::ArgMatches;
 
-pub enum Operation {
-    Commit,
-    BranchFromClipboard,
-    BranchFromTemplate,
-    SetCommitFormat,
-    SetBranchFormat,
-    SetBranchPrefix,
-    Show,
-}
+use crate::file_utils::config_file::get_path_to_config;
 
-pub struct SetFormat {
-    key: String,
-    value: String,
-}
+use super::{
+    CheckoutToPrefix, CommitOperationArguments, CommitSubcommandFlags, OperationWithArguments,
+    ParsedArguments, SetFormat, UseTemplate,
+};
 
-pub struct CheckoutToPrefix {
-    prefix_key: String,
-}
-
-pub struct UseTemplate {
-    key: String,
-    interpolate_values: Vec<String>,
-    use_autocomplete: bool,
-}
-
-pub struct CommitSubcommandFlags {
-    use_branch_number: bool,
-}
-
-pub enum OperationWithArguments {
-    Commit(UseTemplate, CommitSubcommandFlags),
-    BranchFromClipboard(CheckoutToPrefix),
-    BranchFromTemplate(UseTemplate),
-    SetCommitFormat(SetFormat),
-    SetBranchFormat(SetFormat),
-    SetBranchPrefix(SetFormat),
-    Show,
-}
-
-impl TryFrom<ArgMatches> for OperationWithArguments {
+impl TryFrom<ArgMatches> for ParsedArguments {
     type Error = anyhow::Error;
     fn try_from(value: ArgMatches) -> Result<Self, Self::Error> {
-        return match value.subcommand() {
+        let operation_with_arguments = match value.subcommand() {
             Some(("set-branch-prefix", args)) => {
                 let format_vals = get_key_val_from_arg_matches(args, "prefix").unwrap();
 
@@ -70,7 +40,13 @@ impl TryFrom<ArgMatches> for OperationWithArguments {
                     use_branch_number: should_use_number_in_branch.to_owned(),
                 };
 
-                Ok(OperationWithArguments::Commit(use_template, commit_flags))
+                let args = CommitOperationArguments {
+                    flags: commit_flags,
+                    use_template: use_template,
+                };
+                let commit_operation_with_arguments = OperationWithArguments::Commit(args);
+
+                Ok(commit_operation_with_arguments)
             }
 
             Some(("bt", args)) => {
@@ -88,9 +64,23 @@ impl TryFrom<ArgMatches> for OperationWithArguments {
                     checkout_to_prefix,
                 ))
             }
+            Some(("set-clipboard-command", args)) => {
+                let clipboard_command = args.get_one::<String>("program_name").unwrap();
+                Ok(OperationWithArguments::SetClipboardCommand(
+                    clipboard_command.to_owned(),
+                ))
+            }
             Some(("show", _args)) => Ok(OperationWithArguments::Show),
             _ => Err(anyhow::anyhow!("Unknown command")),
         };
+
+        let path_to_config_from_args = value.get_one::<PathBuf>("config");
+        let path_to_config = get_path_to_config(path_to_config_from_args.cloned());
+
+        Ok(ParsedArguments {
+            operation_with_arguments: operation_with_arguments.unwrap(),
+            path_to_config: path_to_config.to_owned(),
+        })
     }
 }
 
@@ -99,12 +89,11 @@ fn get_key_val_from_arg_matches(
     value_id: &str,
 ) -> Result<SetFormat, anyhow::Error> {
     let key = args.get_one::<String>("key").unwrap();
-
-    let prefix = args.get_one::<String>(value_id).unwrap();
+    let value = args.get_one::<String>(value_id).unwrap();
 
     Ok(SetFormat {
         key: key.to_owned(),
-        value: prefix.to_owned(),
+        value: value.to_owned(),
     })
 }
 

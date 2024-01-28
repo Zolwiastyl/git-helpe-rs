@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
-use crate::{cli_arguments::SetOperationArguments, file_utils::config_file::get_path_to_config};
+use crate::{cli::SetFormat, file_utils::config_file::get_path_to_config};
 use anyhow::{Error, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -24,19 +24,19 @@ pub struct Formats {
 }
 
 pub enum BranchOrCommitAction {
-    Branch(SetOperationArguments),
-    Commit(SetOperationArguments),
+    Branch(SetFormat),
+    Commit(SetFormat),
 }
 
-impl TryInto<SetOperationArguments> for BranchOrCommitAction {
+impl TryInto<SetFormat> for BranchOrCommitAction {
     type Error = Error;
-    fn try_into(self) -> std::result::Result<SetOperationArguments, Self::Error> {
+    fn try_into(self) -> std::result::Result<SetFormat, Self::Error> {
         match self {
-            BranchOrCommitAction::Branch(args) => Ok(SetOperationArguments {
+            BranchOrCommitAction::Branch(args) => Ok(SetFormat {
                 key: args.key,
                 value: args.value,
             }),
-            BranchOrCommitAction::Commit(args) => Ok(SetOperationArguments {
+            BranchOrCommitAction::Commit(args) => Ok(SetFormat {
                 key: args.key,
                 value: args.value,
             }),
@@ -56,7 +56,7 @@ impl GitConfig {
     fn default_config() -> Self {
         return GitConfig {
             data: Data::default(),
-            config_path: get_path_to_config(None),
+            config_path: get_path_to_config(None).to_path_buf(),
         };
     }
 
@@ -75,7 +75,7 @@ impl GitConfig {
             config_path: if let Some(config_path) = config_path {
                 config_path
             } else {
-                get_path_to_config(None)
+                get_path_to_config(None).to_path_buf()
             },
         };
     }
