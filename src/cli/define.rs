@@ -36,7 +36,7 @@ pub fn build_cli_commands() -> Command {
         )
         .subcommand(
             Command::new("bp")
-                .arg(Arg::new("key").required(true))
+                .arg(Arg::new("prefix").required(true))
                 .about("Check you out to a branch using your clipboard contents")
                 .after_help(
                     "Will use contents of your clipboard to checkout you to\n\
