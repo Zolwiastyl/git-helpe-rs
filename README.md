@@ -46,12 +46,12 @@ chmod +x git-helpe-rs
 
 <!-- TODO -->
 
-[] use clap builder
+[x] use clap builder
+[x] add piping output from git
 [] add setting branch format
 [] add branch formatting
 [] add {b} in templates
 [] add {[]} in templates
-[] add piping output from git
 [] add dry run
 [] add copy flag
 
