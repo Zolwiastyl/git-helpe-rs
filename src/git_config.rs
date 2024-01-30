@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
 use crate::{
-    cli::{CommitOperationArguments, SetFormat, SetFormatOperation, UseTemplate},
+    cli::{CommitOperationArguments, SetFormat, UseTemplate},
     file_utils::config_file::get_path_to_config,
 };
 use anyhow::{Error, Result};
@@ -15,8 +15,15 @@ pub struct GitConfig {
 }
 
 type Variants = HashMap<String, String>;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ClipboardCommands {
+    copy: String,
+    paste: String,
+}
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Data {
+    pub clipboard_commands: ClipboardCommands,
     pub commit_template_variants: Variants,
     pub branch_template_variants: Variants,
     pub branch_prefix_variants: Variants,
@@ -51,6 +58,10 @@ pub enum BranchOrCommitAction {
 impl Data {
     fn default() -> Self {
         Data {
+            clipboard_commands: ClipboardCommands {
+                copy: "pbcopy".to_string(),
+                paste: "pbpaste".to_string(),
+            },
             commit_template_variants: HashMap::new(),
             branch_template_variants: HashMap::new(),
             branch_prefix_variants: HashMap::new(),
@@ -67,6 +78,7 @@ impl GitConfig {
     }
 
     pub fn new_config(
+        clipboard_commands: ClipboardCommands,
         branch_prefix_variants: Variants,
         branch_format_variants: Variants,
         commit_format_variants: Variants,
@@ -74,6 +86,7 @@ impl GitConfig {
     ) -> Self {
         return GitConfig {
             data: Data {
+                clipboard_commands,
                 branch_template_variants: branch_format_variants,
                 commit_template_variants: commit_format_variants,
                 branch_prefix_variants,
@@ -89,8 +102,15 @@ impl GitConfig {
     pub fn from_file(path_to_file: PathBuf) -> Self {
         if fs::metadata(&path_to_file).is_ok() {
             let contents = fs::read_to_string(&path_to_file);
-            let contents = contents
-                .unwrap_or("{\"commit_format\": \"\", \"branch_format\": \"\"}".to_string());
+            let contents = contents.unwrap_or(
+                "{\
+                    \"clipboard_commands\": {}, \
+                    \"branch_template_variants\": {}, \
+                    \"commit_template_variants\": {}, \
+                    \"branch_prefix_variants\": {}
+                }"
+                .to_string(),
+            );
 
             let data = serde_json::from_str(&contents);
             let data: Data = data.unwrap_or(Data::default());
@@ -174,17 +194,19 @@ impl GitConfig {
     }
 
     pub fn display_config(&self) -> Result<String> {
+        let clipboard_command = self.data.clipboard_commands;
         let branch = self.data.branch_template_variants.to_owned();
         let commit = self.data.commit_template_variants.to_owned();
         let prefixes = self.data.branch_prefix_variants.to_owned();
 
         Ok(format!(
             "
-        branch format: {:?} 
-        commit format: {:?} 
+        clipboard commands: {:?}
+        branch formats: {:?} 
+        commit formats: {:?} 
         branch prefixes: {:?} 
         ",
-            branch, commit, prefixes
+            clipboard_command, branch, commit, prefixes
         ))
     }
 }
