@@ -47,14 +47,16 @@ chmod +x git-helpe-rs
 <!-- TODO -->
 
 [x] use clap builder
-[x] add piping output from git
-[] add setting branch format
-[] add branch formatting
-[] add {b} in templates
-[] add {[]} in templates
-[] add dry run
-[] add copy flag
+[x] piping output from git
+[ ] add variants for template
+[ ] setting branch template
+[ ] branch formatting with template
+[ ] {b} in templates
+[ ] {[]} in templates
+[ ] copy flag
+[ ] dry run
 
+ADD VARIANTS FOR TEMPLATE
   set-branch-format  Set template that can be used when switching branches
   set-commit         Set template for commit formatting
 

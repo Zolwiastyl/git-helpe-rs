@@ -50,7 +50,8 @@ pub fn build_cli_commands() -> Command {
                     you will be checked out like this \n\
                     git checkout -b feature/name-of-your-branch
                     ",
-                ),
+                )
+                .add_copy_flag(),
         )
         .subcommand(
             Command::new("bt")
@@ -59,7 +60,8 @@ pub fn build_cli_commands() -> Command {
                     "Specify which template you want to use \n\
                     if you omit this param default template will be used",
                 ))
-                .about("Check out to a branch based on template"),
+                .about("Check out to a branch based on template")
+                .add_copy_flag(),
         )
         // ========== COMMIT-RELATED COMMANDS ========== //
         .subcommand(
@@ -131,7 +133,8 @@ pub fn build_cli_commands() -> Command {
                     ",
                         ),
                 )
-                .about("Commit using one of templates"),
+                .about("Commit using one of templates")
+                .add_copy_flag(),
         )
         // ============== OTHERS ============== //
         .subcommand(Command::new("show").about("Show current config in plain JSON"))
@@ -146,4 +149,17 @@ pub fn build_cli_commands() -> Command {
                 ",
                 )),
         )
+}
+
+trait AddCopyFlag {
+    fn add_copy_flag(&self) -> Self;
+}
+
+impl AddCopyFlag for Command {
+    fn add_copy_flag(&self) -> Self {
+        self.arg(Arg::new("copy-flag").short('x').help(
+            "instead of executing command pass it to clipboard \n \n
+        you can always configure command used for passing to clipboard",
+        ))
+    }
 }

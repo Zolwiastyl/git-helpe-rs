@@ -1,6 +1,9 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
-use crate::{cli::SetFormat, file_utils::config_file::get_path_to_config};
+use crate::{
+    cli::{CommitOperationArguments, SetFormat, UseTemplate},
+    file_utils::config_file::get_path_to_config,
+};
 use anyhow::{Error, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -11,47 +14,50 @@ pub struct GitConfig {
     config_path: PathBuf,
 }
 
+type Variants = HashMap<String, String>;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Data {
-    pub commit_format: String,
-    pub branch_format: String,
-    pub branch_prefix_variants: HashMap<String, String>,
+    pub commit_template_variants: Variants,
+    pub branch_template_variants: Variants,
+    pub branch_prefix_variants: Variants,
 }
 
 pub struct Formats {
-    pub commit_format: String,
-    pub branch_format: String,
+    pub commit_format_variants: Variants,
+    pub branch_format_variants: Variants,
 }
 
 pub enum BranchOrCommitAction {
-    Branch(SetFormat),
-    Commit(SetFormat),
+    Commit(CommitOperationArguments),
+    BranchFromTemplate(UseTemplate),
 }
 
-impl TryInto<SetFormat> for BranchOrCommitAction {
-    type Error = Error;
-    fn try_into(self) -> std::result::Result<SetFormat, Self::Error> {
-        match self {
-            BranchOrCommitAction::Branch(args) => Ok(SetFormat {
-                key: args.key,
-                value: args.value,
-            }),
-            BranchOrCommitAction::Commit(args) => Ok(SetFormat {
-                key: args.key,
-                value: args.value,
-            }),
-        }
-    }
-}
+// impl TryInto<SetFormat> for BranchOrCommitAction {
+//     type Error = Error;
+//     fn try_into(self) -> std::result::Result<SetFormat, Self::Error> {
+//         match self {
+//             BranchOrCommitAction::BranchFromTemplate(args) => Ok(SetFormat {
+//                 key: args.key,
+//                 value: args.interpolate_values,
+//             }),
+//             BranchOrCommitAction::Commit(args) => Ok(SetFormat {
+//                 key: args.use_template.key,
+//                 value: args.use_template.interpolate_values,
+//             }),
+//         }
+//     }
+// }
+
 impl Data {
     fn default() -> Self {
         Data {
-            commit_format: "".to_string(),
-            branch_format: "".to_string(),
+            commit_template_variants: HashMap::new(),
+            branch_template_variants: HashMap::new(),
             branch_prefix_variants: HashMap::new(),
         }
     }
 }
+
 impl GitConfig {
     fn default_config() -> Self {
         return GitConfig {
@@ -61,16 +67,16 @@ impl GitConfig {
     }
 
     pub fn new_config(
-        hash_map: HashMap<String, String>,
-        branch_format: String,
-        commit_format: String,
+        branch_prefix_variants: Variants,
+        branch_format_variants: Variants,
+        commit_format_variants: Variants,
         config_path: Option<PathBuf>,
     ) -> Self {
         return GitConfig {
             data: Data {
-                branch_format,
-                commit_format,
-                branch_prefix_variants: hash_map,
+                branch_template_variants: branch_format_variants,
+                commit_template_variants: commit_format_variants,
+                branch_prefix_variants,
             },
             config_path: if let Some(config_path) = config_path {
                 config_path
@@ -115,7 +121,7 @@ impl GitConfig {
     // This should get a key as well
     pub fn set_format(&mut self, args: BranchOrCommitAction) -> Result<()> {
         let new_formats: Formats = match args {
-            BranchOrCommitAction::Branch(action_args) => {
+            BranchOrCommitAction::BranchFromTemplate(action_args) => {
                 let result =
                     Self::validate_against_interpolation_regex(&action_args.value, "branch_format");
                 match result {
@@ -126,7 +132,7 @@ impl GitConfig {
                     },
                 }
             }
-            BranchOrCommitAction::Commit(action_args) => {
+            BranchOrCommitAction::BranchFromTemplate(action_args) => {
                 let result =
                     Self::validate_against_interpolation_regex(&action_args.value, "branch_format");
                 match result {
@@ -146,6 +152,16 @@ impl GitConfig {
 
         self.save_to_file()?;
         Ok(())
+    }
+    pub fn set_commit_template_from_variatn(&mut self, args: SetFormat) -> Result<()> {
+        let commit_variants_map = self.data.commit_template_variants;
+        todo!("implement")
+    }
+
+    pub fn set_branch_template_form_variant(&mut self, args: SetFormat) -> Result<()> {
+        let branch_variants_map = self.data.branch_template_variants;
+        let result = Self::validate_against_interpolation_regex(&args.value, &args.key);
+        todo!("implement")
     }
 
     pub fn set_branch_prefix_variant(&mut self, key: String, value: String) -> Result<()> {
@@ -178,14 +194,14 @@ impl GitConfig {
     }
 
     pub fn display_config(&self) -> Result<String> {
-        let branch = self.data.branch_format.to_string();
-        let commit = self.data.commit_format.to_string();
+        let branch = self.data.branch_template_variants.to_owned();
+        let commit = self.data.commit_template_variants.to_owned();
         let prefixes = self.data.branch_prefix_variants.to_owned();
 
         Ok(format!(
             "
-        branch format: {} 
-        commit format: {} 
+        branch format: {:?} 
+        commit format: {:?} 
         branch prefixes: {:?} 
         ",
             branch, commit, prefixes
