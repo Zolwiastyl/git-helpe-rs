@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
 use crate::{
-    cli::{CommitOperationArguments, SetFormat, UseTemplate},
+    cli::{CommitOperationArguments, SetFormat, SetFormatOperation, UseTemplate},
     file_utils::config_file::get_path_to_config,
 };
 use anyhow::{Error, Result};
@@ -22,9 +22,9 @@ pub struct Data {
     pub branch_prefix_variants: Variants,
 }
 
-pub struct Formats {
-    pub commit_format_variants: Variants,
-    pub branch_format_variants: Variants,
+pub struct Templates {
+    pub commit_template_variants: Variants,
+    pub branch_template_variants: Variants,
 }
 
 pub enum BranchOrCommitAction {
@@ -117,51 +117,31 @@ impl GitConfig {
         )));
     }
 
-    // TODO
-    // This should get a key as well
-    pub fn set_format(&mut self, args: BranchOrCommitAction) -> Result<()> {
-        let new_formats: Formats = match args {
-            BranchOrCommitAction::BranchFromTemplate(action_args) => {
-                let result =
-                    Self::validate_against_interpolation_regex(&action_args.value, "branch_format");
-                match result {
-                    Err(err) => panic!("{}", err),
-                    Ok(new_val) => Formats {
-                        branch_format: new_val.to_string(),
-                        commit_format: self.data.commit_format.to_owned(),
-                    },
-                }
-            }
-            BranchOrCommitAction::BranchFromTemplate(action_args) => {
-                let result =
-                    Self::validate_against_interpolation_regex(&action_args.value, "branch_format");
-                match result {
-                    Err(err) => panic!("{}", err),
-                    Ok(new_val) => Formats {
-                        branch_format: self.data.branch_format.to_owned(),
-                        commit_format: new_val.to_string(),
-                    },
-                }
-            }
+    pub fn set_branch_template_variant(&self, arg: SetFormat) -> Result<()> {
+        let result = Self::validate_against_interpolation_regex(&arg.value, "branch_template");
+        match result {
+            Err(e) => panic!("{}", e),
+            Ok(_) => self
+                .data
+                .branch_template_variants
+                .insert(arg.key, arg.value),
         };
-
-        // FIXME
-        // This looks like an obvious overwrite
-        self.data.branch_format = new_formats.branch_format;
-        self.data.commit_format = new_formats.commit_format;
-
-        self.save_to_file()?;
+        self.save_to_file();
         Ok(())
     }
-    pub fn set_commit_template_from_variatn(&mut self, args: SetFormat) -> Result<()> {
-        let commit_variants_map = self.data.commit_template_variants;
-        todo!("implement")
-    }
 
-    pub fn set_branch_template_form_variant(&mut self, args: SetFormat) -> Result<()> {
-        let branch_variants_map = self.data.branch_template_variants;
-        let result = Self::validate_against_interpolation_regex(&args.value, &args.key);
-        todo!("implement")
+    pub fn set_commit_template_variant(&self, arg: SetFormat) -> Result<()> {
+        let result = Self::validate_against_interpolation_regex(&arg.value, "commit_template");
+        let new_data = match result {
+            Err(e) => panic!("{}", e),
+            Ok(_) => {
+                self.data
+                    .commit_template_variants
+                    .insert(arg.key, arg.value);
+            }
+        };
+        self.save_to_file();
+        Ok(())
     }
 
     pub fn set_branch_prefix_variant(&mut self, key: String, value: String) -> Result<()> {
