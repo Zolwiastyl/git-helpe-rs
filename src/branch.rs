@@ -105,6 +105,6 @@ pub fn checkout_to_branch_with_template(
         .unwrap()
         .stdout;
 
-    println!("{:?}", output);
+    println!("{}", String::from_utf8_lossy(&output));
     Ok(())
 }

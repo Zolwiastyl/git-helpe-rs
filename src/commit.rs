@@ -58,6 +58,6 @@ pub fn commit_with_formatted_message(
         .unwrap()
         .stdout;
 
-    println!("{:?}", output);
+    println!("{}", String::from_utf8_lossy(&output));
     Ok(())
 }
