@@ -1,10 +1,10 @@
 use anyhow::Result;
 
 use git_helpe_rs::{
-    branch::checkout_to_branch_with_prefix,
+    branch::{checkout_to_branch_with_prefix, checkout_to_branch_with_template},
     cli,
     commit::commit_with_formatted_message,
-    git_config::{BranchOrCommitAction, GitConfig},
+    git_config::GitConfig,
 };
 
 fn main() -> Result<()> {
@@ -28,13 +28,13 @@ fn main() -> Result<()> {
         // TODO implement delete
         // cli::OperationWithArguments::Delete(val) => config.delete_branch_prefix_variant(val.key),
         cli::OperationWithArguments::SetBranchFormat(args) => {
-            config.set_format(BranchOrCommitAction::Branch(args))
+            config.set_branch_template_variant(args)
         }
         cli::OperationWithArguments::SetCommitFormat(args) => {
-            config.set_format(BranchOrCommitAction::Commit(args))
+            config.set_commit_template_variant(args)
         }
-        cli::OperationWithArguments::BranchFromTemplate(_args) => {
-            todo!("Implement")
+        cli::OperationWithArguments::BranchFromTemplate(args) => {
+            checkout_to_branch_with_template(args, config)
         }
         cli::OperationWithArguments::SetClipboardCommand(_) => {
             todo!("Implement")

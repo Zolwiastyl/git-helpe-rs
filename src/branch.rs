@@ -51,7 +51,10 @@ pub fn checkout_to_branch_with_prefix(options: CheckoutToPrefix, config: GitConf
     ));
 }
 
-pub fn checkout_to_branch_with_template(options: UseTemplate, config: GitConfig) -> Result<()> {
+pub fn checkout_to_branch_with_template(
+    options: UseTemplate,
+    config: GitConfig,
+) -> Result<(), Error> {
     let selected_branch_format = options.key;
 
     let picked_branch_format = config

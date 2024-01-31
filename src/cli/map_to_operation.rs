@@ -19,12 +19,12 @@ impl TryFrom<ArgMatches> for ParsedArguments {
 
                 Ok(OperationWithArguments::SetBranchPrefix(format_vals))
             }
-            Some(("set-branch-format", args)) => {
+            Some(("set-branch-template", args)) => {
                 let format_vals = get_key_val_from_arg_matches(args, "template").unwrap();
 
                 Ok(OperationWithArguments::SetBranchFormat(format_vals))
             }
-            Some(("set-commit-format", args)) => {
+            Some(("set-commit", args)) => {
                 let format_vals = get_key_val_from_arg_matches(args, "template").unwrap();
 
                 Ok(OperationWithArguments::SetCommitFormat(format_vals))
@@ -88,7 +88,8 @@ fn get_key_val_from_arg_matches(
     args: &ArgMatches,
     value_id: &str,
 ) -> Result<SetFormat, anyhow::Error> {
-    let key = args.get_one::<String>("key").unwrap();
+    let default_key = "default".to_string();
+    let key = args.get_one::<String>("key").unwrap_or(&default_key);
     let value = args.get_one::<String>(value_id).unwrap();
 
     Ok(SetFormat {

@@ -17,7 +17,7 @@ pub struct GitConfig {
 type Variants = HashMap<String, String>;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ClipboardCommands {
+pub struct ClipboardCommands {
     pub copy: String,
     pub paste: String,
 }

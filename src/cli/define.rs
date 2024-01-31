@@ -152,11 +152,11 @@ pub fn build_cli_commands() -> Command {
 }
 
 trait AddCopyFlag {
-    fn add_copy_flag(&self) -> Self;
+    fn add_copy_flag(self) -> Self;
 }
 
 impl AddCopyFlag for Command {
-    fn add_copy_flag(&self) -> Self {
+    fn add_copy_flag(self) -> Self {
         self.arg(Arg::new("copy-flag").short('x').help(
             "instead of executing command pass it to clipboard \n \n
         you can always configure command used for passing to clipboard",
