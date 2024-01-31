@@ -55,7 +55,8 @@ pub fn commit_with_formatted_message(
         .arg("-m")
         .arg(interpolated_commit)
         .output()
-        .unwrap();
+        .unwrap()
+        .stdout;
 
     println!("{:?}", output);
     Ok(())

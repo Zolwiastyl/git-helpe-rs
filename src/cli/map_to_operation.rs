@@ -30,7 +30,7 @@ impl TryFrom<ArgMatches> for ParsedArguments {
                 Ok(OperationWithArguments::SetCommitFormat(format_vals))
             }
 
-            Some(("commit", args)) => {
+            Some(("c", args)) => {
                 let use_template = get_use_template_from_arg_matches(args);
 
                 let should_use_number_in_branch = args
@@ -105,10 +105,9 @@ fn get_use_template_from_arg_matches(args: &ArgMatches) -> UseTemplate {
         "default".to_owned()
     };
 
-    let interpolate_values = args
-        .get_one::<Vec<String>>("interpolate_value")
-        .unwrap()
-        .to_owned();
+    let mut args = args.clone();
+
+    let interpolate_values: Vec<String> = args.remove_many("interpolate_values").unwrap().collect();
 
     let use_autocomplete = args.get_one::<bool>("auto-complete").unwrap_or(&false);
 

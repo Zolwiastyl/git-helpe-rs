@@ -102,7 +102,8 @@ pub fn checkout_to_branch_with_template(
         .arg("-b")
         .arg(interpolated_branch)
         .output()
-        .unwrap();
+        .unwrap()
+        .stdout;
 
     println!("{:?}", output);
     Ok(())

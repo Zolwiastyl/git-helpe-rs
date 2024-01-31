@@ -2,7 +2,7 @@ use clap::{Arg, ArgAction, Command};
 
 pub fn build_cli_commands() -> Command {
     Command::new("")
-        .arg(Arg::new("config").required(false).short('c'))
+        .arg(Arg::new("config").required(false))
         .subcommand(
             Command::new("set-branch-prefix")
                 .arg(Arg::new("key").required(false))
@@ -55,7 +55,7 @@ pub fn build_cli_commands() -> Command {
         )
         .subcommand(
             Command::new("bt")
-                .arg(Arg::new("interpolate_values").required(true).num_args(0..))
+                .arg(Arg::new("interpolate-values").required(true).num_args(0..))
                 .arg(Arg::new("key").short('k').required(false).help(
                     "Specify which template you want to use \n\
                     if you omit this param default template will be used",
