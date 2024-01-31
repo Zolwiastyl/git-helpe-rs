@@ -1,15 +1,39 @@
+use core::panic;
 use std::process::Command;
 
 use anyhow::{Error, Result};
 
-use crate::{cli::CommitOperationArguments, git_config::GitConfig};
+use crate::{
+    cli::CommitOperationArguments,
+    git_config::GitConfig,
+    template::{interpolate, validate_interpolation_places_count},
+};
 
 pub fn commit_with_formatted_message(
     options: CommitOperationArguments,
     config: GitConfig,
 ) -> Result<(), Error> {
+    let selected_commit_format = options.use_template.key;
+
+    let _use_autocomplete_values = options.use_template.use_autocomplete;
+    let _auto_complete_values = config.data.autocomplete_values;
+
+    let picked_commit_format = config
+        .data
+        .commit_template_variants
+        .get(&selected_commit_format)
+        .unwrap_or_else(|| {
+            panic!(
+                "No commit template under given key {} \n \
+                You should add it prior to trying to use",
+                selected_commit_format
+            )
+        });
+
+    // TODO add {[]} autocomplete_values handling
+    // TODO add {b} branch_values handling
     let is_valid = validate_interpolation_places_count(
-        &config.data.commit_format,
+        picked_commit_format,
         options.use_template.interpolate_values.len(),
     );
 
@@ -19,98 +43,20 @@ pub fn commit_with_formatted_message(
     }
 
     let interpolated_commit = interpolate(
-        &config.data.commit_format,
+        picked_commit_format,
         options.use_template.interpolate_values,
     )?;
 
-    Command::new("git")
+    // TODO here should be copy_flag checked
+    // TODO here should be dry_run_flag checked
+
+    let output = Command::new("git")
         .arg("commit")
         .arg("-m")
         .arg(interpolated_commit)
         .output()
         .unwrap();
+
+    println!("{:?}", output);
     Ok(())
-}
-
-fn validate_interpolation_places_count(format: &String, params_len: usize) -> Result<()> {
-    let splitted = format.split("{}").into_iter();
-    let places_to_interpolate = Vec::from_iter(splitted).len();
-
-    if places_to_interpolate - 1 == params_len {
-        Ok(())
-    } else {
-        Err(Error::msg(format!(
-            "
-       \n Number of places to interpolate doesn't match with number of args provided.
-       Expected {} 
-       Received {}
-        ",
-            places_to_interpolate - 1,
-            params_len
-        )))
-    }
-}
-
-fn interpolate(format: &String, values: Vec<String>) -> Result<String> {
-    let splitted = format.split("{}");
-    let appended: Vec<String> = splitted
-        .into_iter()
-        .enumerate()
-        .map(|(i, x)| {
-            if i >= values.len() {
-                return x.to_owned();
-            }
-            return x.to_owned() + &values[i];
-        })
-        .collect();
-
-    Ok(appended.join(""))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_interpolate_no_placeholders() {
-        let format = String::from("Hello, world!");
-        let values = vec![];
-        let result = interpolate(&format, values);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "Hello, world!");
-    }
-
-    #[test]
-    fn test_interpolate_single_placeholder() {
-        let format = String::from("Hello, {}!");
-        let values = vec![String::from("world")];
-        let result = interpolate(&format, values);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "Hello, world!");
-    }
-
-    #[test]
-    fn test_interpolate_multiple_placeholders() {
-        let format = String::from("Hello, {}, you are {} years old.");
-        let values = vec![String::from("John"), String::from("30")];
-        let result = interpolate(&format, values);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "Hello, John, you are 30 years old.");
-    }
-
-    #[test]
-    fn test_interpolate_not_enough_values() {
-        let format = String::from("Hello, {}!");
-        let values: Vec<String> = vec![];
-        let result = validate_interpolation_places_count(&format, values.len());
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_interpolate_too_many_values() {
-        let format = String::from("Hello, {}!");
-        let values = vec![String::from("world"), String::from("extra")];
-        let result = validate_interpolation_places_count(&format, values.len());
-        assert!(result.is_err());
-    }
 }

@@ -49,8 +49,10 @@ chmod +x git-helpe-rs
 [x] use clap builder
 [x] piping output from git
 [x] add variants for template in gitconfig
-[ ] setting branch template
-[ ] branch formatting with template
+[x] adding clipboard commands
+[x] setting branch template
+[x] branch formatting with template
+
 [ ] {b} in templates
 [ ] {[]} in templates
 [ ] copy flag

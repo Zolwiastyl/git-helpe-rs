@@ -18,8 +18,8 @@ type Variants = HashMap<String, String>;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ClipboardCommands {
-    copy: String,
-    paste: String,
+    pub copy: String,
+    pub paste: String,
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Data {
@@ -27,6 +27,7 @@ pub struct Data {
     pub commit_template_variants: Variants,
     pub branch_template_variants: Variants,
     pub branch_prefix_variants: Variants,
+    pub autocomplete_values: Option<Vec<String>>,
 }
 
 pub struct Templates {
@@ -39,22 +40,6 @@ pub enum BranchOrCommitAction {
     BranchFromTemplate(UseTemplate),
 }
 
-// impl TryInto<SetFormat> for BranchOrCommitAction {
-//     type Error = Error;
-//     fn try_into(self) -> std::result::Result<SetFormat, Self::Error> {
-//         match self {
-//             BranchOrCommitAction::BranchFromTemplate(args) => Ok(SetFormat {
-//                 key: args.key,
-//                 value: args.interpolate_values,
-//             }),
-//             BranchOrCommitAction::Commit(args) => Ok(SetFormat {
-//                 key: args.use_template.key,
-//                 value: args.use_template.interpolate_values,
-//             }),
-//         }
-//     }
-// }
-
 impl Data {
     fn default() -> Self {
         Data {
@@ -65,6 +50,7 @@ impl Data {
             commit_template_variants: HashMap::new(),
             branch_template_variants: HashMap::new(),
             branch_prefix_variants: HashMap::new(),
+            autocomplete_values: None,
         }
     }
 }
@@ -90,6 +76,7 @@ impl GitConfig {
                 branch_template_variants: branch_format_variants,
                 commit_template_variants: commit_format_variants,
                 branch_prefix_variants,
+                autocomplete_values: None,
             },
             config_path: if let Some(config_path) = config_path {
                 config_path
@@ -137,7 +124,7 @@ impl GitConfig {
         )));
     }
 
-    pub fn set_branch_template_variant(&self, arg: SetFormat) -> Result<()> {
+    pub fn set_branch_template_variant(&mut self, arg: SetFormat) -> Result<()> {
         let result = Self::validate_against_interpolation_regex(&arg.value, "branch_template");
         match result {
             Err(e) => panic!("{}", e),
@@ -150,9 +137,9 @@ impl GitConfig {
         Ok(())
     }
 
-    pub fn set_commit_template_variant(&self, arg: SetFormat) -> Result<()> {
+    pub fn set_commit_template_variant(&mut self, arg: SetFormat) -> Result<()> {
         let result = Self::validate_against_interpolation_regex(&arg.value, "commit_template");
-        let new_data = match result {
+        match result {
             Err(e) => panic!("{}", e),
             Ok(_) => {
                 self.data
@@ -194,7 +181,7 @@ impl GitConfig {
     }
 
     pub fn display_config(&self) -> Result<String> {
-        let clipboard_command = self.data.clipboard_commands;
+        let clipboard_command = &self.data.clipboard_commands;
         let branch = self.data.branch_template_variants.to_owned();
         let commit = self.data.commit_template_variants.to_owned();
         let prefixes = self.data.branch_prefix_variants.to_owned();
@@ -206,7 +193,7 @@ impl GitConfig {
         commit formats: {:?} 
         branch prefixes: {:?} 
         ",
-            clipboard_command, branch, commit, prefixes
+            *clipboard_command, branch, commit, prefixes
         ))
     }
 }
