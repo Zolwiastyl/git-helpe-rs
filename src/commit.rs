@@ -5,18 +5,13 @@ use std::process::Stdio;
 use anyhow::{Error, Result};
 
 use crate::cli::DryRunAndCopyFlag;
+use crate::run_mode::get_run_mode_from_options;
+use crate::run_mode::RunMode;
 use crate::{
     cli::CommitOperationArguments,
     git_config::GitConfig,
     template::{interpolate, validate_interpolation_places_count},
 };
-
-enum RunMode {
-    Normal,
-    DryRun,
-    DryRunAndCopy,
-    Copy,
-}
 
 pub fn commit_with_formatted_message(
     options: CommitOperationArguments,
@@ -56,8 +51,6 @@ pub fn commit_with_formatted_message(
         options.use_template.interpolate_values,
     )?;
 
-    // TODO here should be copy_flag checked
-    // TODO here should be dry_run_flag checked
     let run_mode = get_run_mode_from_options(DryRunAndCopyFlag {
         dry_run: options.flags.dry_run,
         copy: options.flags.copy,
@@ -109,20 +102,4 @@ pub fn commit_with_formatted_message(
             Ok(())
         }
     };
-}
-
-fn get_run_mode_from_options(flags: DryRunAndCopyFlag) -> RunMode {
-    if flags.copy {
-        if flags.dry_run {
-            RunMode::DryRunAndCopy
-        } else {
-            RunMode::Copy
-        }
-    } else {
-        if flags.dry_run {
-            RunMode::DryRun
-        } else {
-            RunMode::Normal
-        }
-    }
 }
