@@ -6,6 +6,7 @@ use anyhow::{Error, Result};
 
 use crate::cli::DryRunAndCopyFlag;
 use crate::run_mode::get_run_mode_from_options;
+use crate::run_mode::run_copy;
 use crate::run_mode::RunMode;
 use crate::{
     cli::CommitOperationArguments,
@@ -19,8 +20,8 @@ pub fn commit_with_formatted_message(
 ) -> Result<(), Error> {
     let selected_commit_format = options.use_template.key;
 
-    let _use_autocomplete_values = options.use_template.use_autocomplete;
-    let _auto_complete_values = config.data.autocomplete_values;
+    let _use_autocomplete_values = &options.use_template.use_autocomplete;
+    let _auto_complete_values = &config.data.autocomplete_values;
 
     let picked_commit_format = config
         .data
@@ -86,20 +87,9 @@ pub fn commit_with_formatted_message(
             );
             Ok(())
         }
-        RunMode::Copy => {
-            let copy_command = config.data.clipboard_commands.copy;
-            let echo = Command::new("echo")
-                .arg(format!("git commit -m \"{}\"", interpolated_commit))
-                .stdout(Stdio::piped())
-                .spawn()
-                .unwrap();
-
-            Command::new(copy_command)
-                .stdin(Stdio::from(echo.stdout.unwrap()))
-                .output()
-                .unwrap();
-
-            Ok(())
-        }
+        RunMode::Copy => run_copy(
+            &config,
+            format!("git commit -m \"{}\"", interpolated_commit),
+        ),
     };
 }

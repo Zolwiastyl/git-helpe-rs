@@ -53,12 +53,15 @@ chmod +x git-helpe-rs
 [x] setting branch template
 [x] branch formatting with template
 
-[ ] copy flag
-[ ] dry run
+[ ] copy flag and dry run
+      [x] commit
+      [ ] branch:
+            [ ] prefix
+            [ ] template
 
 [ ] {b} in templates
 [ ] {[]} in templates
-[ ] autocomplete
+[ ] autocompletion
 [ ] publish
 
 ADD VARIANTS FOR TEMPLATE

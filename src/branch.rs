@@ -4,14 +4,15 @@ use anyhow::{anyhow, Error, Result};
 use regex::Regex;
 
 use crate::{
-    cli::{CheckoutToPrefix, UseTemplate},
+    cli::{CheckoutToPrefix, DryRunAndCopyFlag, UseTemplate},
     git_config::GitConfig,
+    run_mode::{get_run_mode_from_options, run_copy, RunMode},
     template::{interpolate, validate_interpolation_places_count},
 };
 
 pub fn checkout_to_branch_with_prefix(options: CheckoutToPrefix, config: GitConfig) -> Result<()> {
     let checkout_regex = Regex::new(r"^git checkout -b [a-zA-Z0-9_.-]+$").unwrap();
-    let paste_command = config.data.clipboard_commands.paste;
+    let paste_command = &config.data.clipboard_commands.paste;
 
     let clipboard_value = Command::new(paste_command)
         .output()
@@ -27,32 +28,62 @@ pub fn checkout_to_branch_with_prefix(options: CheckoutToPrefix, config: GitConf
         "
         ));
     }
+    let prefix_found = match config.data.branch_prefix_variants.get(&options.prefix_key) {
+        None => {
+            return Err(anyhow!(
+                "There was no prefix for key {} \n You should add it prior to trying to use",
+                options.prefix_key
+            ))
+        }
+        Some(prefix) => prefix,
+    };
 
-    if let Some(prefix_found) = config.data.branch_prefix_variants.get(&options.prefix_key) {
-        let split_on_space: Vec<String> =
-            output_as_string.split(" ").map(|s| s.to_string()).collect();
+    let split_on_space: Vec<String> = output_as_string.split(" ").map(|s| s.to_string()).collect();
 
-        let after_prefix = &split_on_space[3..].join("");
+    let after_prefix = &split_on_space[3..].join("");
 
-        let new_val = prefix_found.to_owned() + after_prefix;
+    let full_branch_name = prefix_found.to_owned() + after_prefix;
 
-        // TODO here should be copy_flag checked
-        // TODO here should be dry_run_flag checked
+    let run_mode = get_run_mode_from_options(DryRunAndCopyFlag {
+        dry_run: options.dry_run,
 
-        let result = Command::new("git")
-            .arg("checkout")
-            .arg("-b")
-            .arg(new_val)
-            .output()
-            .unwrap();
+        copy: options.copy,
+    });
 
-        println!("git output: \n {:?}", String::from_utf8(result.stdout));
-        return Ok(());
-    }
-    return Err(anyhow!(
-        "There was no prefix for key {} \n You should add it prior to trying to use",
-        options.prefix_key
-    ));
+    return match run_mode {
+        RunMode::Normal => {
+            let result = Command::new("git")
+                .arg("checkout")
+                .arg("-b")
+                .arg(full_branch_name)
+                .output()
+                .unwrap();
+
+            println!("git output: \n {:?}", String::from_utf8(result.stdout));
+            Ok(())
+        }
+        RunMode::DryRun => {
+            println!(
+                "Going to run: \n \
+                    git checkout -b {}",
+                full_branch_name
+            );
+            Ok(())
+        }
+        RunMode::Copy => run_copy(&config, format!("git checkout -b {}", full_branch_name)),
+        RunMode::DryRunAndCopy => {
+            let copy_command = config.data.clipboard_commands.copy;
+
+            println!(
+                "Going to run: \n \
+        echo 'git checkout -b {}' > {}",
+                full_branch_name, copy_command
+            );
+            Ok(())
+        }
+    };
+    // TODO here should be copy_flag checked
+    // TODO here should be dry_run_flag checked
 }
 
 pub fn checkout_to_branch_with_template(
