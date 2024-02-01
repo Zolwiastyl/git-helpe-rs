@@ -15,7 +15,8 @@ pub fn checkout_to_branch_with_prefix(options: CheckoutToPrefix, config: GitConf
 
     let clipboard_value = Command::new(paste_command)
         .output()
-        .expect("Couldn't run pbpaste");
+        .expect("Couldn't run paste_command");
+
     let output_as_string = String::from_utf8(clipboard_value.stdout).unwrap();
 
     if !checkout_regex.is_match(&output_as_string) {
@@ -34,6 +35,9 @@ pub fn checkout_to_branch_with_prefix(options: CheckoutToPrefix, config: GitConf
         let after_prefix = &split_on_space[3..].join("");
 
         let new_val = prefix_found.to_owned() + after_prefix;
+
+        // TODO here should be copy_flag checked
+        // TODO here should be dry_run_flag checked
 
         let result = Command::new("git")
             .arg("checkout")

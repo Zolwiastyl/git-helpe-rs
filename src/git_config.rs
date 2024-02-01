@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
 use crate::{
-    cli::{CommitOperationArguments, SetFormat, UseTemplate},
+    cli::{CommitOperationArguments, SetClipboardCommands, SetFormat, UseTemplate},
     file_utils::config_file::get_path_to_config,
 };
 use anyhow::{Error, Result};
@@ -133,8 +133,7 @@ impl GitConfig {
                 .branch_template_variants
                 .insert(arg.key, arg.value),
         };
-        self.save_to_file();
-        Ok(())
+        self.save_to_file()
     }
 
     pub fn set_commit_template_variant(&mut self, arg: SetFormat) -> Result<()> {
@@ -147,14 +146,22 @@ impl GitConfig {
                     .insert(arg.key, arg.value);
             }
         };
-        self.save_to_file();
-        Ok(())
+        self.save_to_file()
     }
 
     pub fn set_branch_prefix_variant(&mut self, key: String, value: String) -> Result<()> {
         self.data.branch_prefix_variants.insert(key, value);
-        self.save_to_file()?;
-        Ok(())
+        self.save_to_file()
+    }
+
+    pub fn set_clipboard_command(&mut self, args: SetClipboardCommands) -> Result<()> {
+        let new_clipboard_commands = ClipboardCommands {
+            copy: args.copy,
+            paste: args.paste,
+        };
+
+        self.data.clipboard_commands = new_clipboard_commands;
+        self.save_to_file()
     }
 
     pub fn delete_branch_prefix_variant(&mut self, key: String) -> Result<()> {
@@ -164,8 +171,7 @@ impl GitConfig {
             key,
             old_val.unwrap_or(String::from("None"))
         );
-        self.save_to_file()?;
-        Ok(())
+        self.save_to_file()
     }
 
     fn save_to_file(&self) -> Result<()> {
@@ -182,18 +188,23 @@ impl GitConfig {
 
     pub fn display_config(&self) -> Result<String> {
         let clipboard_command = &self.data.clipboard_commands;
+        let copy = &clipboard_command.copy;
+        let paste = &clipboard_command.paste;
         let branch = self.data.branch_template_variants.to_owned();
         let commit = self.data.commit_template_variants.to_owned();
         let prefixes = self.data.branch_prefix_variants.to_owned();
 
         Ok(format!(
             "
-        clipboard commands: {:?}
+        clipboard commands: {{
+            \"copy\": {:?}
+            \"paste\": {:?}
+        }}
         branch formats: {:?} 
         commit formats: {:?} 
         branch prefixes: {:?} 
         ",
-            *clipboard_command, branch, commit, prefixes
+            *copy, *paste, branch, commit, prefixes
         ))
     }
 }

@@ -36,8 +36,8 @@ fn main() -> Result<()> {
         cli::OperationWithArguments::BranchFromTemplate(args) => {
             checkout_to_branch_with_template(args, config)
         }
-        cli::OperationWithArguments::SetClipboardCommand(_) => {
-            todo!("Implement")
+        cli::OperationWithArguments::SetClipboardCommands(args) => {
+            config.set_clipboard_command(args)
         }
     };
 

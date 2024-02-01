@@ -65,9 +65,18 @@ impl TryFrom<ArgMatches> for ParsedArguments {
                 ))
             }
             Some(("set-clipboard-command", args)) => {
-                let clipboard_command = args.get_one::<String>("program_name").unwrap();
-                Ok(OperationWithArguments::SetClipboardCommand(
-                    clipboard_command.to_owned(),
+                let mut args = args.clone();
+                let clipboard_command: Vec<String> =
+                    args.remove_many("copy-paste-pair").unwrap().collect();
+
+                let copy = clipboard_command.get(0).unwrap();
+                let paste = clipboard_command.get(1).unwrap();
+
+                Ok(OperationWithArguments::SetClipboardCommands(
+                    super::SetClipboardCommands {
+                        copy: copy.to_owned(),
+                        paste: paste.to_owned(),
+                    },
                 ))
             }
             Some(("show", _args)) => Ok(OperationWithArguments::Show),

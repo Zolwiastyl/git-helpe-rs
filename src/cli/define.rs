@@ -140,12 +140,11 @@ pub fn build_cli_commands() -> Command {
         .subcommand(Command::new("show").about("Show current config in plain JSON"))
         .subcommand(
             Command::new("set-clipboard-command")
-                .about("[WIP] Set command which will be run when doing taking value from clipboard")
-                .arg(Arg::new("program_name").help(
-                    "On default it's written to use pbpaste as \
-                command for taking branch from clipboard, but if you want \
-                you can use command of your own choice
-               please don't use it for now 
+                .about("[WIP] Set pair of copy&paste command which will be used")
+                .arg(Arg::new("copy-paste-pair").num_args(0..3).help(
+                    "On default it's written to use pbcopy and pbpaste as \
+                command for setting and taking value from clipboard, but if you want \
+                you can use command of your own choice.
                 ",
                 )),
         )

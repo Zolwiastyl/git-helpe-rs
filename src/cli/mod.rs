@@ -37,6 +37,10 @@ pub struct CommitOperationArguments {
     pub use_template: UseTemplate,
     pub flags: CommitSubcommandFlags,
 }
+pub struct SetClipboardCommands {
+    pub copy: String,
+    pub paste: String,
+}
 
 pub enum OperationWithArguments {
     Commit(CommitOperationArguments),
@@ -45,7 +49,7 @@ pub enum OperationWithArguments {
     SetCommitFormat(SetFormat),
     SetBranchFormat(SetFormat),
     SetBranchPrefix(SetFormat),
-    SetClipboardCommand(String),
+    SetClipboardCommands(SetClipboardCommands),
     Show,
 }
 
