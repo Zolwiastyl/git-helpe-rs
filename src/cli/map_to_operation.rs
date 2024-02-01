@@ -6,8 +6,8 @@ use clap::{Arg, ArgMatches};
 use crate::file_utils::config_file::get_path_to_config;
 
 use super::{
-    CheckoutToPrefix, CommitOperationArguments, CommitSubcommandFlags, OperationWithArguments,
-    ParsedArguments, SetFormat, UseTemplate,
+    CheckoutToPrefix, CommitOperationArguments, CommitSubcommandFlags, DryRunAndCopyFlag,
+    OperationWithArguments, ParsedArguments, SetFormat, UseTemplate,
 };
 
 impl TryFrom<ArgMatches> for ParsedArguments {
@@ -112,11 +112,6 @@ fn get_key_val_from_arg_matches(
         key: key.to_owned(),
         value: value.to_owned(),
     })
-}
-
-struct DryRunAndCopyFlag {
-    dry_run: bool,
-    copy: bool,
 }
 
 fn get_dry_run_and_copy_flags(args: &ArgMatches) -> DryRunAndCopyFlag {

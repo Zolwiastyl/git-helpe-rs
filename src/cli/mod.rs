@@ -25,6 +25,11 @@ pub struct CheckoutToPrefix {
     pub dry_run: bool,
 }
 
+pub struct DryRunAndCopyFlag {
+    pub dry_run: bool,
+    pub copy: bool,
+}
+
 pub struct UseTemplate {
     pub key: String,
     pub interpolate_values: Vec<String>,
