@@ -33,7 +33,7 @@ run:
 
 `chmod +x git-helpe-rs`
 
-and copy it to your bin directory to start using.
+and copy it to your bin directory to start using or make alias for it.
 
 Or as one command:
 
@@ -53,10 +53,13 @@ chmod +x git-helpe-rs
 [x] setting branch template
 [x] branch formatting with template
 
-[ ] {b} in templates
-[ ] {[]} in templates
 [ ] copy flag
 [ ] dry run
+
+[ ] {b} in templates
+[ ] {[]} in templates
+[ ] autocomplete
+[ ] publish
 
 ADD VARIANTS FOR TEMPLATE
   set-branch-format  Set template that can be used when switching branches

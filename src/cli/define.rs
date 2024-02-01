@@ -1,4 +1,4 @@
-use clap::{Arg, ArgAction, Command};
+use clap::{builder::styling, Arg, ArgAction, Command};
 
 pub fn build_cli_commands() -> Command {
     Command::new("")
@@ -51,7 +51,8 @@ pub fn build_cli_commands() -> Command {
                     git checkout -b feature/name-of-your-branch
                     ",
                 )
-                .add_copy_flag(),
+                .add_copy_flag()
+                .add_dry_run_flag(),
         )
         .subcommand(
             Command::new("bt")
@@ -61,7 +62,8 @@ pub fn build_cli_commands() -> Command {
                     if you omit this param default template will be used",
                 ))
                 .about("Check out to a branch based on template")
-                .add_copy_flag(),
+                .add_copy_flag()
+                .add_dry_run_flag(),
         )
         // ========== COMMIT-RELATED COMMANDS ========== //
         .subcommand(
@@ -134,7 +136,8 @@ pub fn build_cli_commands() -> Command {
                         ),
                 )
                 .about("Commit using one of templates")
-                .add_copy_flag(),
+                .add_copy_flag()
+                .add_dry_run_flag(),
         )
         // ============== OTHERS ============== //
         .subcommand(Command::new("show").about("Show current config in plain JSON"))
@@ -148,6 +151,8 @@ pub fn build_cli_commands() -> Command {
                 ",
                 )),
         )
+        .color(clap::ColorChoice::Always)
+        .get_styles()
 }
 
 trait AddCopyFlag {
@@ -156,9 +161,44 @@ trait AddCopyFlag {
 
 impl AddCopyFlag for Command {
     fn add_copy_flag(self) -> Self {
-        self.arg(Arg::new("copy-flag").short('x').help(
-            "instead of executing command pass it to clipboard \n \n
+        self.arg(
+            Arg::new("copy-flag")
+                .short('c')
+                .action(ArgAction::SetTrue)
+                .help(
+                    "instead of executing command pass it to clipboard \n \n
         you can always configure command used for passing to clipboard",
-        ))
+                ),
+        )
+    }
+}
+
+trait AddDryRunFlag {
+    fn add_dry_run_flag(self) -> Self;
+}
+
+impl AddDryRunFlag for Command {
+    fn add_dry_run_flag(self) -> Self {
+        self.arg(
+            Arg::new("dry-run")
+                .long("dr")
+                .action(ArgAction::SetTrue)
+                .help("instead of executing command see what will be ran \n \n"),
+        )
+    }
+}
+
+trait Styles {
+    fn get_styles(self) -> Self;
+}
+impl Styles for Command {
+    fn get_styles(self) -> Self {
+        let styles = styling::Styles::styled()
+            .header(styling::AnsiColor::Green.on_default() | styling::Effects::BOLD)
+            .usage(styling::AnsiColor::Green.on_default() | styling::Effects::BOLD)
+            .literal(styling::AnsiColor::Blue.on_default() | styling::Effects::BOLD)
+            .placeholder(styling::AnsiColor::Cyan.on_default());
+
+        self.styles(styles)
     }
 }

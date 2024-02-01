@@ -21,16 +21,22 @@ pub struct SetFormat {
 
 pub struct CheckoutToPrefix {
     pub prefix_key: String,
+    pub copy: bool,
+    pub dry_run: bool,
 }
 
 pub struct UseTemplate {
     pub key: String,
     pub interpolate_values: Vec<String>,
     pub use_autocomplete: bool,
+    pub copy: bool,
+    pub dry_run: bool,
 }
 
 pub struct CommitSubcommandFlags {
     pub use_branch_number: bool,
+    pub copy: bool,
+    pub dry_run: bool,
 }
 
 pub struct CommitOperationArguments {

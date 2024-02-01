@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Ok;
-use clap::ArgMatches;
+use clap::{Arg, ArgMatches};
 
 use crate::file_utils::config_file::get_path_to_config;
 
@@ -36,8 +36,12 @@ impl TryFrom<ArgMatches> for ParsedArguments {
                 let should_use_number_in_branch = args
                     .get_one::<bool>("infer-number-from-branch")
                     .unwrap_or(&false);
+
+                let dry_run_and_copy_flags = get_dry_run_and_copy_flags(args);
                 let commit_flags = CommitSubcommandFlags {
                     use_branch_number: should_use_number_in_branch.to_owned(),
+                    dry_run: dry_run_and_copy_flags.dry_run,
+                    copy: dry_run_and_copy_flags.copy,
                 };
 
                 let args = CommitOperationArguments {
@@ -56,8 +60,11 @@ impl TryFrom<ArgMatches> for ParsedArguments {
             }
             Some(("bp", args)) => {
                 let prefix_key = args.get_one::<String>("prefix").unwrap();
+                let dry_run_and_copy_flags = get_dry_run_and_copy_flags(args);
                 let checkout_to_prefix = CheckoutToPrefix {
                     prefix_key: prefix_key.to_owned(),
+                    dry_run: dry_run_and_copy_flags.dry_run,
+                    copy: dry_run_and_copy_flags.copy,
                 };
 
                 Ok(OperationWithArguments::BranchFromClipboard(
@@ -107,6 +114,21 @@ fn get_key_val_from_arg_matches(
     })
 }
 
+struct DryRunAndCopyFlag {
+    dry_run: bool,
+    copy: bool,
+}
+
+fn get_dry_run_and_copy_flags(args: &ArgMatches) -> DryRunAndCopyFlag {
+    let copy = args
+        .get_one::<bool>("copy-flag")
+        .unwrap_or(&false)
+        .to_owned();
+    let dry_run = args.get_one::<bool>("dry-run").unwrap_or(&false).to_owned();
+
+    DryRunAndCopyFlag { copy, dry_run }
+}
+
 fn get_use_template_from_arg_matches(args: &ArgMatches) -> UseTemplate {
     let key = if let Some(key) = args.get_one::<String>("key") {
         key.to_owned()
@@ -119,10 +141,13 @@ fn get_use_template_from_arg_matches(args: &ArgMatches) -> UseTemplate {
     let interpolate_values: Vec<String> = args.remove_many("interpolate_values").unwrap().collect();
 
     let use_autocomplete = args.get_one::<bool>("auto-complete").unwrap_or(&false);
+    let dry_run_and_copy_flags = get_dry_run_and_copy_flags(&args);
 
     UseTemplate {
         interpolate_values: interpolate_values,
         key: key,
         use_autocomplete: use_autocomplete.to_owned(),
+        dry_run: dry_run_and_copy_flags.dry_run,
+        copy: dry_run_and_copy_flags.copy,
     }
 }
