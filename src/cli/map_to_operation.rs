@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Ok;
-use clap::{Arg, ArgMatches};
+use clap::ArgMatches;
 
 use crate::file_utils::config_file::get_path_to_config;
 

@@ -1,7 +1,15 @@
 use anyhow::{Error, Result};
 
 pub fn validate_interpolation_places_count(format: &String, params_len: usize) -> Result<()> {
-    let splitted = format.split("{}").into_iter();
+    validate_interpolation_places_on_custom_pattern(format, params_len, "{}")
+}
+
+pub fn validate_interpolation_places_on_custom_pattern(
+    format: &String,
+    params_len: usize,
+    custom_pattern: &str,
+) -> Result<()> {
+    let splitted = format.split(custom_pattern).into_iter();
     let places_to_interpolate = Vec::from_iter(splitted).len();
 
     if places_to_interpolate - 1 == params_len {
@@ -20,7 +28,15 @@ pub fn validate_interpolation_places_count(format: &String, params_len: usize) -
 }
 
 pub fn interpolate(format: &String, values: Vec<String>) -> Result<String> {
-    let splitted = format.split("{}");
+    interpolate_on_custom_val(format, values, "{}")
+}
+
+pub fn interpolate_on_custom_val(
+    format: &String,
+    values: Vec<String>,
+    interpolate_on: &str,
+) -> Result<String> {
+    let splitted = format.split(interpolate_on);
     let appended: Vec<String> = splitted
         .into_iter()
         .enumerate()

@@ -1,6 +1,5 @@
 use core::panic;
 use std::process::Command;
-use std::process::Stdio;
 
 use anyhow::{Error, Result};
 
@@ -8,6 +7,8 @@ use crate::cli::DryRunAndCopyFlag;
 use crate::run_mode::get_run_mode_from_options;
 use crate::run_mode::run_copy;
 use crate::run_mode::RunMode;
+use crate::template::interpolate_on_custom_val;
+use crate::template::validate_interpolation_places_on_custom_pattern;
 use crate::{
     cli::CommitOperationArguments,
     git_config::GitConfig,
@@ -35,8 +36,6 @@ pub fn commit_with_formatted_message(
             )
         });
 
-    // TODO add {[]} autocomplete_values handling
-    // TODO add {b} branch_values handling
     let is_valid = validate_interpolation_places_count(
         picked_commit_format,
         options.use_template.interpolate_values.len(),
@@ -51,6 +50,36 @@ pub fn commit_with_formatted_message(
         picked_commit_format,
         options.use_template.interpolate_values,
     )?;
+
+    let interpolated_commit = if options.flags.use_branch_number {
+        let higher_bound_of_digits_in_utf8 = &58;
+        let lower_bound_of_digits_in_utf8 = &47;
+        let branch_output = Command::new("git").arg("status").output().unwrap().stdout;
+        let branch_number: Vec<u8> = branch_output
+            .into_iter()
+            .filter(|u8_char| {
+                u8_char < higher_bound_of_digits_in_utf8 && u8_char > lower_bound_of_digits_in_utf8
+            })
+            .collect();
+        let branch_number: String = String::from_utf8_lossy(&branch_number).to_string();
+        let branch_number_as_interpolate_value = vec![branch_number];
+
+        validate_interpolation_places_on_custom_pattern(
+            picked_commit_format,
+            branch_number_as_interpolate_value.len(),
+            "{b}",
+        )
+        .unwrap();
+
+        interpolate_on_custom_val(
+            picked_commit_format,
+            branch_number_as_interpolate_value,
+            "{b}",
+        )
+        .unwrap()
+    } else {
+        interpolated_commit
+    };
 
     let run_mode = get_run_mode_from_options(DryRunAndCopyFlag {
         dry_run: options.flags.dry_run,
