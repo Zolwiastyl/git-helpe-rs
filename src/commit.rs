@@ -52,6 +52,7 @@ pub fn commit_with_formatted_message(
     )?;
 
     let interpolated_commit = if options.flags.use_branch_number {
+        println!("{}", interpolated_commit);
         let higher_bound_of_digits_in_utf8 = &58;
         let lower_bound_of_digits_in_utf8 = &47;
         let branch_output = Command::new("git").arg("status").output().unwrap().stdout;
@@ -65,7 +66,7 @@ pub fn commit_with_formatted_message(
         let branch_number_as_interpolate_value = vec![branch_number];
 
         validate_interpolation_places_on_custom_pattern(
-            picked_commit_format,
+            &interpolated_commit,
             branch_number_as_interpolate_value.len(),
             "{b}",
         )
