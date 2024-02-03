@@ -73,7 +73,7 @@ pub fn commit_with_formatted_message(
         .unwrap();
 
         interpolate_on_custom_val(
-            picked_commit_format,
+            &interpolated_commit,
             branch_number_as_interpolate_value,
             "{b}",
         )
