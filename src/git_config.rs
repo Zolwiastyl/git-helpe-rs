@@ -1,14 +1,12 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
-use crate::{cli_arguments::SetOperationArguments, file_utils::config_file::get_path_to_config};
+use crate::{
+    cli::{CommitOperationArguments, SetClipboardCommands, SetFormat, UseTemplate},
+    file_utils::config_file::get_path_to_config,
+};
 use anyhow::{Error, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-
-pub fn open(custom_path_to_config_file: Option<PathBuf>) -> GitConfig {
-    let path_to_config = get_path_to_config(custom_path_to_config_file);
-    GitConfig::from_file(path_to_config)
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GitConfig {
@@ -16,71 +14,74 @@ pub struct GitConfig {
     config_path: PathBuf,
 }
 
+type Variants = HashMap<String, String>;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClipboardCommands {
+    pub copy: String,
+    pub paste: String,
+}
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Data {
-    pub commit_format: String,
-    pub branch_format: String,
-    pub branch_prefix_variants: HashMap<String, String>,
+    pub clipboard_commands: ClipboardCommands,
+    pub commit_template_variants: Variants,
+    pub branch_template_variants: Variants,
+    pub branch_prefix_variants: Variants,
+    pub autocomplete_values: Option<Vec<String>>,
 }
 
-pub struct Formats {
-    pub commit_format: String,
-    pub branch_format: String,
+pub struct Templates {
+    pub commit_template_variants: Variants,
+    pub branch_template_variants: Variants,
 }
 
 pub enum BranchOrCommitAction {
-    Branch(SetOperationArguments),
-    Commit(SetOperationArguments),
+    Commit(CommitOperationArguments),
+    BranchFromTemplate(UseTemplate),
 }
 
-impl TryInto<SetOperationArguments> for BranchOrCommitAction {
-    type Error = Error;
-    fn try_into(self) -> std::result::Result<SetOperationArguments, Self::Error> {
-        match self {
-            BranchOrCommitAction::Branch(args) => Ok(SetOperationArguments {
-                key: args.key,
-                value: args.value,
-            }),
-            BranchOrCommitAction::Commit(args) => Ok(SetOperationArguments {
-                key: args.key,
-                value: args.value,
-            }),
-        }
-    }
-}
 impl Data {
     fn default() -> Self {
         Data {
-            commit_format: "".to_string(),
-            branch_format: "".to_string(),
+            clipboard_commands: ClipboardCommands {
+                copy: "pbcopy".to_string(),
+                paste: "pbpaste".to_string(),
+            },
+            commit_template_variants: HashMap::new(),
+            branch_template_variants: HashMap::new(),
             branch_prefix_variants: HashMap::new(),
+            autocomplete_values: None,
         }
     }
 }
+
 impl GitConfig {
     fn default_config() -> Self {
         return GitConfig {
             data: Data::default(),
-            config_path: get_path_to_config(None),
+            config_path: get_path_to_config(None).to_path_buf(),
         };
     }
 
     pub fn new_config(
-        hash_map: HashMap<String, String>,
-        branch_format: String,
-        commit_format: String,
+        clipboard_commands: ClipboardCommands,
+        branch_prefix_variants: Variants,
+        branch_format_variants: Variants,
+        commit_format_variants: Variants,
         config_path: Option<PathBuf>,
     ) -> Self {
         return GitConfig {
             data: Data {
-                branch_format,
-                commit_format,
-                branch_prefix_variants: hash_map,
+                clipboard_commands,
+                branch_template_variants: branch_format_variants,
+                commit_template_variants: commit_format_variants,
+                branch_prefix_variants,
+                autocomplete_values: None,
             },
             config_path: if let Some(config_path) = config_path {
                 config_path
             } else {
-                get_path_to_config(None)
+                get_path_to_config(None).to_path_buf()
             },
         };
     }
@@ -88,8 +89,15 @@ impl GitConfig {
     pub fn from_file(path_to_file: PathBuf) -> Self {
         if fs::metadata(&path_to_file).is_ok() {
             let contents = fs::read_to_string(&path_to_file);
-            let contents = contents
-                .unwrap_or("{\"commit_format\": \"\", \"branch_format\": \"\"}".to_string());
+            let contents = contents.unwrap_or(
+                "{\
+                    \"clipboard_commands\": {}, \
+                    \"branch_template_variants\": {}, \
+                    \"commit_template_variants\": {}, \
+                    \"branch_prefix_variants\": {}
+                }"
+                .to_string(),
+            );
 
             let data = serde_json::from_str(&contents);
             let data: Data = data.unwrap_or(Data::default());
@@ -116,54 +124,54 @@ impl GitConfig {
         )));
     }
 
-    pub fn set_format(&mut self, args: BranchOrCommitAction) -> Result<()> {
-        let new_formats: Formats = match args {
-            BranchOrCommitAction::Branch(action_args) => {
-                let result =
-                    Self::validate_against_interpolation_regex(&action_args.value, "branch_format");
-                match result {
-                    Err(err) => panic!("{}", err),
-                    Ok(new_val) => Formats {
-                        branch_format: new_val.to_string(),
-                        commit_format: self.data.commit_format.to_owned(),
-                    },
-                }
-            }
-            BranchOrCommitAction::Commit(action_args) => {
-                let result =
-                    Self::validate_against_interpolation_regex(&action_args.value, "branch_format");
-                match result {
-                    Err(err) => panic!("{}", err),
-                    Ok(new_val) => Formats {
-                        branch_format: self.data.branch_format.to_owned(),
-                        commit_format: new_val.to_string(),
-                    },
-                }
+    pub fn set_branch_template_variant(&mut self, arg: SetFormat) -> Result<()> {
+        let result = Self::validate_against_interpolation_regex(&arg.value, "branch_template");
+        match result {
+            Err(e) => panic!("{}", e),
+            Ok(_) => self
+                .data
+                .branch_template_variants
+                .insert(arg.key, arg.value),
+        };
+        self.save_to_file()
+    }
+
+    pub fn set_commit_template_variant(&mut self, arg: SetFormat) -> Result<()> {
+        let result = Self::validate_against_interpolation_regex(&arg.value, "commit_template");
+        match result {
+            Err(e) => panic!("{}", e),
+            Ok(_) => {
+                self.data
+                    .commit_template_variants
+                    .insert(arg.key, arg.value);
             }
         };
-
-        self.data.branch_format = new_formats.branch_format;
-        self.data.commit_format = new_formats.commit_format;
-
-        self.save_to_file()?;
-        Ok(())
+        self.save_to_file()
     }
 
-    pub fn set_branch_prefix_variants(&mut self, key: String, value: String) -> Result<()> {
+    pub fn set_branch_prefix_variant(&mut self, key: String, value: String) -> Result<()> {
         self.data.branch_prefix_variants.insert(key, value);
-        self.save_to_file()?;
-        Ok(())
+        self.save_to_file()
     }
 
-    pub fn delete_branch_prefix_variants(&mut self, key: String) -> Result<()> {
+    pub fn set_clipboard_command(&mut self, args: SetClipboardCommands) -> Result<()> {
+        let new_clipboard_commands = ClipboardCommands {
+            copy: args.copy,
+            paste: args.paste,
+        };
+
+        self.data.clipboard_commands = new_clipboard_commands;
+        self.save_to_file()
+    }
+
+    pub fn delete_branch_prefix_variant(&mut self, key: String) -> Result<()> {
         let old_val = self.data.branch_prefix_variants.remove(&key);
         println!(
             "Removed {} : {} from config ",
             key,
             old_val.unwrap_or(String::from("None"))
         );
-        self.save_to_file()?;
-        Ok(())
+        self.save_to_file()
     }
 
     fn save_to_file(&self) -> Result<()> {
@@ -179,17 +187,24 @@ impl GitConfig {
     }
 
     pub fn display_config(&self) -> Result<String> {
-        let branch = self.data.branch_format.to_string();
-        let commit = self.data.commit_format.to_string();
+        let clipboard_command = &self.data.clipboard_commands;
+        let copy = &clipboard_command.copy;
+        let paste = &clipboard_command.paste;
+        let branch = self.data.branch_template_variants.to_owned();
+        let commit = self.data.commit_template_variants.to_owned();
         let prefixes = self.data.branch_prefix_variants.to_owned();
 
         Ok(format!(
             "
-        branch format: {} 
-        commit format: {} 
+        clipboard commands: {{
+            \"copy\": {:?}
+            \"paste\": {:?}
+        }}
+        branch formats: {:?} 
+        commit formats: {:?} 
         branch prefixes: {:?} 
         ",
-            branch, commit, prefixes
+            *copy, *paste, branch, commit, prefixes
         ))
     }
 }

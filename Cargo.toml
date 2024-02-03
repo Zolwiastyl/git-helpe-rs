@@ -1,13 +1,23 @@
 [package]
 name = "git-helpe-rs"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
+build = "./build.rs"
+authors = ["zolwiastyl"]
+description = "CLI helpers for formatting commits and branches, to make my daily work easier. Moderatly fast."
+license = "MIT OR Apache-2.0"
+
+[build-dependencies]
+clap_complete = "4.4.10"
+clap = { version = "4.2.4", features = ["derive", "cargo", "color"] }
+[workspace]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = "1.0.70"
-clap = { version = "4.2.4", features = ["derive"] }
+clap = { version = "4.2.4", features = ["derive", "cargo", "color"] }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 regex = "1.5.4"
