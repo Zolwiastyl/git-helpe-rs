@@ -111,7 +111,12 @@ pub fn checkout_to_branch_with_template(
         return Err(err);
     };
 
-    let interpolate_values = options.interpolate_values;
+    let interpolate_values = options
+        .interpolate_values
+        .iter()
+        .map(|val| val.replace(" ", "-"))
+        .collect();
+
     // Had to figure out around closure that couldn't move value
     let interpolate_values_for_debugging = format!("{:?}", interpolate_values);
     let interpolated_branch =
