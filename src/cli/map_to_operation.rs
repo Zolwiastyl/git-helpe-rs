@@ -133,9 +133,14 @@ fn get_use_template_from_arg_matches(args: &ArgMatches) -> UseTemplate {
 
     let mut args = args.clone();
 
-    let interpolate_values: Vec<String> = args.remove_many("interpolate_values").unwrap().collect();
+    let interpolate_values: Vec<String> = args.remove_many("interpolate-values").unwrap().collect();
 
-    let use_autocomplete = args.get_one::<bool>("auto-complete").unwrap_or(&false);
+    let use_autocomplete = match args.try_contains_id("auto-complete") {
+        Err(_) => &false,
+        _ => args.get_one::<bool>("auto-complete").unwrap_or(&false),
+        // Err(_) => &false,
+    };
+
     let dry_run_and_copy_flags = get_dry_run_and_copy_flags(&args);
 
     UseTemplate {

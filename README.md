@@ -53,11 +53,11 @@ chmod +x git-helpe-rs
 [x] setting branch template
 [x] branch formatting with template
 
-[ ] copy flag and dry run
+[x] copy flag and dry run
       [x] commit
-      [ ] branch:
-            [ ] prefix
-            [ ] template
+      [x] branch:
+            [x] prefix
+            [x] template
 
 [ ] {b} in templates
 [ ] {[]} in templates

@@ -111,7 +111,7 @@ pub fn build_cli_commands() -> Command {
         )
         .subcommand(
             Command::new("c")
-                .arg(Arg::new("interpolate_values").required(true).num_args(0..))
+                .arg(Arg::new("interpolate-values").required(true).num_args(0..))
                 .arg(
                     Arg::new("auto-complete")
                         .short('a')

@@ -82,8 +82,6 @@ pub fn checkout_to_branch_with_prefix(options: CheckoutToPrefix, config: GitConf
             Ok(())
         }
     };
-    // TODO here should be copy_flag checked
-    // TODO here should be dry_run_flag checked
 }
 
 pub fn checkout_to_branch_with_template(
@@ -129,17 +127,44 @@ pub fn checkout_to_branch_with_template(
             )
         });
 
-    // TODO here should be copy_flag checked
-    // TODO here should be dry_run flag checked
+    let run_mode = get_run_mode_from_options(DryRunAndCopyFlag {
+        dry_run: options.dry_run,
+        copy: options.copy,
+    });
 
-    let output = Command::new("git")
-        .arg("checkout")
-        .arg("-b")
-        .arg(interpolated_branch)
-        .output()
-        .unwrap()
-        .stdout;
+    match run_mode {
+        RunMode::Normal => {
+            let output = Command::new("git")
+                .arg("checkout")
+                .arg("-b")
+                .arg(interpolated_branch)
+                .output()
+                .unwrap()
+                .stdout;
 
-    println!("{}", String::from_utf8_lossy(&output));
-    Ok(())
+            println!("{}", String::from_utf8_lossy(&output));
+            Ok(())
+        }
+        RunMode::DryRun => {
+            let command_to_print = format!("git checkout -b {}", interpolated_branch);
+            println!("Command to be executed: \n {}", command_to_print);
+            Ok(())
+        }
+        RunMode::DryRunAndCopy => {
+            let copy_command = config.data.clipboard_commands.copy;
+
+            let command_to_print = format!(
+                "echo 'git checkout -b {}' > {}",
+                interpolated_branch, copy_command
+            );
+            let message_to_print =
+                format!("command that's going to be run: \n {}", command_to_print);
+            println!("{}", message_to_print);
+            Ok(())
+        }
+        RunMode::Copy => {
+            let value_to_copy = format!("git checkout -b {}", interpolated_branch);
+            run_copy(&config, value_to_copy)
+        }
+    }
 }
