@@ -1,8 +1,8 @@
 [package]
 name = "git-helpe-rs"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
-build = "./build.rs"
+build = "build.rs"
 authors = ["zolwiastyl"]
 description = "CLI helpers for formatting commits and branches, to make my daily work easier. Moderatly fast."
 license = "MIT OR Apache-2.0"

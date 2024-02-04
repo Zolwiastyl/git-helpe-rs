@@ -5,7 +5,6 @@ use std::io::Error;
 include!("src/cli/define.rs");
 
 fn main() -> Result<(), Error> {
-    println!("asd");
     let outdir = match env::var_os("OUT_DIR") {
         None => return Ok(()),
         Some(outdir) => outdir,
