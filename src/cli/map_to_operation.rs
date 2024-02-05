@@ -86,6 +86,13 @@ impl TryFrom<ArgMatches> for ParsedArguments {
                     },
                 ))
             }
+            Some(("generate-autocompletion-script", args)) => {
+                let path: PathBuf = args.get_one::<String>("output-directory").unwrap().into();
+
+                Ok(OperationWithArguments::GenerateAutocompletionScript(
+                    path.to_owned(),
+                ))
+            }
             Some(("show", _args)) => Ok(OperationWithArguments::Show),
             _ => Err(anyhow::anyhow!("Unknown command")),
         };

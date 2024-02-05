@@ -62,6 +62,7 @@ pub enum OperationWithArguments {
     SetBranchPrefix(SetFormat),
     SetClipboardCommands(SetClipboardCommands),
     Show,
+    GenerateAutocompletionScript(PathBuf),
 }
 
 pub struct ParsedArguments {

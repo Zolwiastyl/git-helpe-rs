@@ -151,6 +151,16 @@ pub fn build_cli_commands() -> Command {
                 ",
                 )),
         )
+        .subcommand(
+            Command::new("generate-autocompletion-script")
+                .about("Generates bash completion script")
+                .arg(
+                    Arg::new("output-directory")
+                        .required(true)
+                        .help("Directory in which git-helpe-rs.bash will be placed"),
+                ),
+        )
+        // ============= COLORS ============== //
         .color(clap::ColorChoice::Always)
         .get_styles()
 }

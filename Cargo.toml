@@ -1,6 +1,6 @@
 [package]
 name = "git-helpe-rs"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 build = "build.rs"
 authors = ["zolwiastyl"]
@@ -18,6 +18,7 @@ clap = { version = "4.2.4", features = ["derive", "cargo", "color"] }
 [dependencies]
 anyhow = "1.0.70"
 clap = { version = "4.2.4", features = ["derive", "cargo", "color"] }
+clap_complete = "4.4.10"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 regex = "1.5.4"

@@ -1,6 +1,7 @@
 use anyhow::Result;
 
 use git_helpe_rs::{
+    autocompletion,
     branch::{checkout_to_branch_with_prefix, checkout_to_branch_with_template},
     cli,
     commit::commit_with_formatted_message,
@@ -38,6 +39,9 @@ fn main() -> Result<()> {
         }
         cli::OperationWithArguments::SetClipboardCommands(args) => {
             config.set_clipboard_command(args)
+        }
+        cli::OperationWithArguments::GenerateAutocompletionScript(path) => {
+            autocompletion::generate(path)
         }
     };
 

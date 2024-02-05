@@ -1,3 +1,4 @@
+pub mod autocompletion;
 pub mod branch;
 pub mod cli;
 pub mod commit;
