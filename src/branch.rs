@@ -46,7 +46,6 @@ pub fn checkout_to_branch_with_prefix(options: CheckoutToPrefix, config: GitConf
 
     let run_mode = get_run_mode_from_options(DryRunAndCopyFlag {
         dry_run: options.dry_run,
-
         copy: options.copy,
     });
 

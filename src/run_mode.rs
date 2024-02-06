@@ -43,3 +43,55 @@ pub fn run_copy(config: &GitConfig, value_to_copy: String) -> Result<(), Error> 
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_run_mode_from_options() {
+        // Test case: Copy flag is true, DryRun flag is true
+        let flags = DryRunAndCopyFlag {
+            copy: true,
+            dry_run: true,
+        };
+        let run_mode = get_run_mode_from_options(flags);
+        match run_mode {
+            RunMode::DryRunAndCopy => assert!(true),
+            _ => assert!(false),
+        }
+
+        // Test case: Copy flag is true, DryRun flag is false
+        let flags = DryRunAndCopyFlag {
+            copy: true,
+            dry_run: false,
+        };
+        let run_mode = get_run_mode_from_options(flags);
+        match run_mode {
+            RunMode::Copy => assert!(true),
+            _ => assert!(false),
+        }
+
+        // Test case: Copy flag is false, DryRun flag is true
+        let flags = DryRunAndCopyFlag {
+            copy: false,
+            dry_run: true,
+        };
+        let run_mode = get_run_mode_from_options(flags);
+        match run_mode {
+            RunMode::DryRun => assert!(true),
+            _ => assert!(false),
+        }
+
+        // Test case: Copy flag is false, DryRun flag is false
+        let flags = DryRunAndCopyFlag {
+            copy: false,
+            dry_run: false,
+        };
+        let run_mode = get_run_mode_from_options(flags);
+        match run_mode {
+            RunMode::Normal => assert!(true),
+            _ => assert!(false),
+        }
+    }
+}
