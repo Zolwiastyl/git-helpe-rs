@@ -52,7 +52,6 @@ pub fn commit_with_formatted_message(
     )?;
 
     let interpolated_commit = if options.flags.use_branch_number {
-        println!("{}", interpolated_commit);
         let branch_output = Command::new("git").arg("status").output().unwrap().stdout;
 
         let branch_number = get_branch_number_from_git_status_output(branch_output).unwrap();
@@ -73,7 +72,6 @@ pub fn commit_with_formatted_message(
         )
         .unwrap()
     } else {
-        println!("no flag");
         interpolated_commit
     };
 
